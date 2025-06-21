@@ -31,6 +31,17 @@ class Team {
         this.won = Forstack.won;
         this.freeHitActive = Forstack.freeHitActive;
     }
+
+    @Override
+    public String toString() {
+        return "Team{" +
+                "teamName='" + teamName + '\'' +
+                '}';
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
 }
 
 public class MatchSimulation {
