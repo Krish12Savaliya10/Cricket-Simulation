@@ -112,7 +112,6 @@ public class Tournament {
             }
 
         System.out.println("\nFinal Match Schedule:");
-        Collections.shuffle(Schedule);
         printSchedule();
     }
 
@@ -158,7 +157,18 @@ public class Tournament {
                 Schedule.add(new Match(t1, t2));
             }
         }
+        int groupSize=group1.size();
+        int index=0;
+        ArrayList<Match> temp=new ArrayList<>();
+        while(Schedule.size()!=temp.size()) {
+            temp.add(Schedule.get(index));
+            index=(index+groupSize+1)%Schedule.size();
+        }
+            Schedule.clear();
+        Schedule.addAll(temp);
+        temp.clear();
     }
+
     static void printSchedule() {
         System.out.println("\n--- Final Tournament Schedule ---");
         int matchNo = 1;
