@@ -164,7 +164,7 @@ public class Tournament {
             temp.add(Schedule.get(index));
             index=(index+groupSize+1)%Schedule.size();
         }
-            Schedule.clear();
+        Schedule.clear();
         Schedule.addAll(temp);
         temp.clear();
     }
