@@ -7,6 +7,7 @@ import java.util.InputMismatchException;
 import java.util.Stack;
 
 class Team {
+    public LinkedListOfPlayer players;
     int totalRun;
     int overPlayed;
     int wicketDown;
@@ -45,10 +46,10 @@ class Team {
 }
 
 public class MatchSimulation {
-    private static LinkedListOfPlayer team1Players;
-    private static LinkedListOfPlayer team2Players;
-    private static Team team1;
-    private static Team team2;
+    static LinkedListOfPlayer team1Players;
+    static LinkedListOfPlayer team2Players;
+    static Team team1;
+    static Team team2;
     private static LinkedListOfPlayer.Player Batsman1;
     private static LinkedListOfPlayer.Player Batsman2;
     private static Stack<LinkedListOfPlayer.Player> Bat1;
@@ -56,7 +57,7 @@ public class MatchSimulation {
     private static Stack<LinkedListOfPlayer.Bowler> Ball;
     private static Stack<Team> BatTeam;
     private static int MaxOverByBowler;
-    private static void inputPlayers(Scanner sc, LinkedListOfPlayer teamPlayers, String teamName, int NumberOfPlayer) {
+    static void inputPlayers(Scanner sc, LinkedListOfPlayer teamPlayers, String teamName, int NumberOfPlayer) {
         int batsmenCount, allRoundersCount, bowlersCount;
 
         do {
@@ -101,7 +102,7 @@ public class MatchSimulation {
         }
     }
 
-    private static int getValidCount(Scanner sc, int min) {
+    static int getValidCount(Scanner sc, int min) {
         while (true) {
             try {
                 int count = sc.nextInt();
@@ -119,7 +120,7 @@ public class MatchSimulation {
         }
     }
 
-    private static String getValidName(Scanner sc) {
+    static String getValidName(Scanner sc) {
         while (true) {
             try {
                 String name = sc.nextLine().trim().toUpperCase();

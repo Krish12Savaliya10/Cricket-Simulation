@@ -21,6 +21,8 @@ public class LinkedListOfPlayer {
         protected int oversBowled;
         protected int wickets;
         protected int runsGiven;
+        protected int centuries;
+        protected int fifty;
 
         protected Player next;
 
@@ -96,6 +98,22 @@ public class LinkedListOfPlayer {
 
         public void setFours(int fours) {
             this.fours = fours;
+        }
+
+        public int getFifty() {
+            return fifty;
+        }
+
+        public void setFifty(int fifty) {
+            this.fifty = fifty;
+        }
+
+        public int getCenturies() {
+            return centuries;
+        }
+
+        public void setCenturies(int centuries) {
+            this.centuries = centuries;
         }
 
         public int getOversBowled() {return oversBowled;}
