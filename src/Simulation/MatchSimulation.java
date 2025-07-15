@@ -6,44 +6,7 @@ import java.util.Scanner;
 import java.util.InputMismatchException;
 import java.util.Stack;
 
-class Team {
-    public LinkedListOfPlayer players;
-    int totalRun;
-    int overPlayed;
-    int wicketDown;
-    int Target;
-    String teamName;
-    boolean won;
-    boolean freeHitActive;
 
-    public Team(String teamName) {
-        this.teamName = teamName;
-        totalRun = 0;
-        overPlayed = 0;
-        wicketDown = 0;
-        won = false;
-        freeHitActive = false;
-    }
-    public Team(Team Forstack){
-        this.teamName =Forstack.teamName;
-        this.totalRun = Forstack.totalRun;
-        this.overPlayed = Forstack.overPlayed;
-        this.wicketDown = Forstack.wicketDown;
-        this.won = Forstack.won;
-        this.freeHitActive = Forstack.freeHitActive;
-    }
-
-    @Override
-    public String toString() {
-        return "Team{" +
-                "teamName='" + teamName + '\'' +
-                '}';
-    }
-
-    public String getTeamName() {
-        return teamName;
-    }
-}
 
 public class MatchSimulation {
     static LinkedListOfPlayer team1Players;
@@ -252,7 +215,7 @@ public class MatchSimulation {
                                      LinkedListOfPlayer.Bowler bowler, Stack<String> overStack) {
         System.out.println("No ball! Free hit awarded for next ball!");
         battingTeam.freeHitActive = true;
-        battingTeam.totalRun += 1;
+       // battingTeam.totalRun += 1;
         bowler.setRunsGiven(bowler.getRunsGiven() + 1);
 
         System.out.println("Enter e/E if Extra runs and Enter o/O if Runout in Noball else press [ENTER]:");
@@ -388,31 +351,26 @@ public class MatchSimulation {
         outPlayer.setPlaying(false);
 
         // Replace the out player
-        if (outPlayer == Batsman1) {
+        if (outPlayer == Batsman1 && runoutEnd==1) {
             Batsman1 = newBatsman;
-        } else {
+            Batsman1.setOnStrike(true);
+            Batsman2.setOnStrike(false);
+        } else if(outPlayer == Batsman1 && runoutEnd==2){
+            Batsman1 = newBatsman;
+            Batsman2.setOnStrike(true);
+            Batsman1.setOnStrike(false);
+        } else if (outPlayer == Batsman2 && runoutEnd==1) {
             Batsman2 = newBatsman;
+            Batsman2.setOnStrike(true);
+            Batsman1.setOnStrike(false);
+        }
+        else {
+            Batsman2 = newBatsman;
+            Batsman1.setOnStrike(true);
+            Batsman2.setOnStrike(false);
         }
 
         // Set strike based on runout end
-        boolean strikerKeepsEnd = (runoutEnd == 1); // Keeper's end means striker keeps end
-        if (strikerKeepsEnd) {
-            if (whoRunOut == 1) { // Striker out at keeper's end
-                Batsman1.setOnStrike(true);
-                Batsman2.setOnStrike(false);
-            } else { // Non-striker out at keeper's end
-                Batsman1.setOnStrike(false);
-                Batsman2.setOnStrike(true);
-            }
-        } else { // Bowler's end
-            if (whoRunOut == 1) { // Striker out at bowler's end
-                Batsman1.setOnStrike(false);
-                Batsman2.setOnStrike(true);
-            } else { // Non-striker out at bowler's end
-                Batsman1.setOnStrike(true);
-                Batsman2.setOnStrike(false);
-            }
-        }
 
         return runs;
     }
@@ -433,9 +391,7 @@ public class MatchSimulation {
         Stack<String> ThisOver = new Stack<>();
 
         outerloop: for (i = 0; i < totalOvers; i++) {
-            if (!ThisOver.isEmpty()) {
-                System.out.println("Over " + (i) + ":" + ThisOver);
-            }
+
             ThisOver.clear();
 
             for (j = 0; j < 6; j++) {
@@ -532,6 +488,9 @@ public class MatchSimulation {
                         j--;
                         break;
                 }
+                if (!ThisOver.isEmpty()) {
+                    System.out.println("Over " + (i) + ":" + ThisOver);
+                }
                 if(j==5){
                     System.out.println("Enter u/U for change last ball input else press [ENTER]");
                     if(sc.nextLine().equalsIgnoreCase("U")){
@@ -550,6 +509,7 @@ public class MatchSimulation {
                     break outerloop;
                 }
             }
+            StrickRotete(Batsman1,Batsman2);
 
             System.out.println("Over " + (i + 1) + " completed.");
             Bowler.setOversBowled(Bowler.getOversBowled() + 1);
@@ -668,41 +628,42 @@ public class MatchSimulation {
         System.out.println("\n=== MATCH RESULT ===");
         if (BattingTeam.won) {
             System.out.println(BattingTeam.teamName + " won by " + (numberOfPlayer - BattingTeam.wicketDown - 1) + " wicket(s).");
+            BattingTeam.setWin(BattingTeam.getWin()+1);
+            BattingTeam.setPoints(BattingTeam.getPoints()+2);
+            if(BattingTeam==team1)
+                team2.setLose(team2.getLose()+1);
+            else
+                team1.setLose(team1.getLose()+1);
         } else if (BattingTeam == team1) {
             System.out.println(team2.teamName + " won by " + (team2.totalRun - team1.totalRun ) + " runs.");
+            team2.setWin(team2.getWin()+1);
+            team2.setPoints(team2.getPoints()+2);
+            team1.setLose(team1.getLose()+1);
         } else if (BattingTeam == team2) {
             System.out.println(team1.teamName + " won by " + (team1.totalRun - team2.totalRun ) + " runs.");
+            team1.setWin(team1.getWin()+1);
+            team1.setPoints(team1.getPoints()+2);
+            team2.setLose(team2.getLose()+1);
         } else {
             System.out.println("Match drawn");
+            team1.setPoints(team1.getPoints()+1);
+            team2.setPoints(team2.getPoints()+1);
         }
     }
 
-    public static void Stimuletion() throws InterruptedException {
-        Scanner sc = new Scanner(System.in);
+    public static void Stimuletion(Scanner sc,Team Team1,Team Team2,LinkedListOfPlayer Team1Players,LinkedListOfPlayer Team2Players,int over,int NumberOfPlayer) throws InterruptedException {
         Bat1=new Stack<>();
         Bat2=new Stack<>();
         Ball=new Stack<>();
         BatTeam=new Stack<>();
 
-        System.out.println("Enter name for Team 1:");
-        String team1Name = getValidName(sc);
-        System.out.println("Enter name for Team 2:");
-        String team2Name = getValidName(sc);
+        team1 = Team1;
+        String team1Name=team1.getTeamName();
+        team2 = Team2;
+        String team2Name =team2.getTeamName();
 
-        team1 = new Team(team1Name);
-        team2 = new Team(team2Name);
-
-        System.out.println("Enter number of players in each team:");
-        int NumberOfPlayer = getValidChoice(sc, "Enter player count 6 to 11:", 6, 11);
-
-        team1Players = new LinkedListOfPlayer();
-        team2Players = new LinkedListOfPlayer();
-
-        System.out.println("\nEnter players for " + team1Name);
-        inputPlayers(sc, team1Players, team1Name, NumberOfPlayer);
-
-        System.out.println("\nEnter players for " + team2Name);
-        inputPlayers(sc, team2Players, team2Name, NumberOfPlayer);
+        team1Players = Team1Players;
+        team2Players = Team2Players;
 
         System.out.println("\n" + team1Name + " Players:");
         team1Players.displayPlayerName();
@@ -717,7 +678,7 @@ public class MatchSimulation {
         boolean isTeam1Batting = BattingTeam == team1;
 
         System.out.println("Enter Number Of Overs (2-90):");
-        int over = getValidChoice(sc, "", 2, 90);
+
 
         MaxOverByBowler=getValidChoice(sc,"Max over by singal Bowler",1,over/2);
 
@@ -756,11 +717,6 @@ public class MatchSimulation {
         playInnings(sc, BattingTeam, isTeam1Batting, over, 2, NumberOfPlayer, Target);
 
         displayMatchResult(BattingTeam, NumberOfPlayer);
-        sc.close();
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        Stimuletion();
     }
 }
 

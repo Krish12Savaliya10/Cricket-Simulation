@@ -5,24 +5,92 @@ import DataStructure.LinkedListOfPlayer;
 import java.util.*;
 import java.util.ArrayList;
 
-import static Simulation.MatchSimulation.getValidCount;
-import static Simulation.MatchSimulation.getValidName;
+import static Simulation.MatchSimulation.*;
+
+class Team {
+    public LinkedListOfPlayer players;
+    int totalRun;
+    int overPlayed;
+    int wicketDown;
+    int Target;
+    String teamName;
+    int win;
+    int lose;
+    int points;
+    int matchPlayed;
+    double NRR;
+    boolean won;
+    boolean freeHitActive;
+
+    public Team(String teamName) {
+        this.teamName = teamName;
+        totalRun = 0;
+        overPlayed = 0;
+        wicketDown = 0;
+        won = false;
+        freeHitActive = false;
+    }
+    public Team(Team Forstack){
+        this.teamName =Forstack.teamName;
+        this.totalRun = Forstack.totalRun;
+        this.overPlayed = Forstack.overPlayed;
+        this.wicketDown = Forstack.wicketDown;
+        this.won = Forstack.won;
+        this.freeHitActive = Forstack.freeHitActive;
+    }
+    public void setDefault(Team team){
+        team.totalRun = 0;
+        team.overPlayed = 0;
+        team.wicketDown = 0;
+        team.won = false;
+        team.freeHitActive = false;
+        team.Target=0;
+    }
+
+    @Override
+    public String toString() {
+        return "Team{" +
+                "teamName='" + teamName + '\'' +
+                '}';
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public int getLose() {
+        return lose;
+    }
+
+    public void setLose(int lose) {
+        this.lose = lose;
+    }
+
+    public int getWin() {
+        return win;
+    }
+
+    public void setWin(int win) {
+        this.win = win;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
+    }
+}
 
 class Match {
     Team team1;
     Team team2;
-    int points;
-    int wins;
-    int losses;
-    double NRR;
+
 
     public Match(Team team1, Team team2) {
         this.team1 = team1;
         this.team2 = team2;
-        this.points = 0;
-        this.wins = 0;
-        this.losses = 0;
-        this.NRR = 0.0;
     }
 
     @Override
@@ -41,7 +109,7 @@ public class Tournament {
     static ArrayList<Team> Group2 = new ArrayList<>();
     static HashMap<Team, LinkedListOfPlayer> TeamSet=new HashMap<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Scanner sc = new Scanner(System.in);
 
         System.out.println("Enter 1 for Single Match");
@@ -55,11 +123,14 @@ public class Tournament {
         System.out.println("Enter number of Backup player (0 to 3)");
         backup=sc.nextInt();}
         sc.nextLine();
+        int over = 0;
 
         switch (choice) {
             case 1 :
                 TwoTeamsMatches(sc, 1,(playerCount+backup));
                 printSchedule();
+                System.out.println("Enter number of over(2 to 50)");
+                over=sc.nextInt();
                 break;
 
             case 2 :
@@ -68,6 +139,8 @@ public class Tournament {
                 sc.nextLine();
                 TwoTeamsMatches(sc, n,(playerCount+backup));
                 printSchedule();
+                System.out.println("Enter number of over(2 to 50)");
+                over=sc.nextInt();
                 break;
 
             case 3 :
@@ -143,7 +216,8 @@ public class Tournament {
                                 break;
                         }
                         printSchedule();
-
+                        System.out.println("Enter number of over(2 to 50)");
+                        over=sc.nextInt();
                 }
                 System.out.println("Point table option");
                 if(isGroup){
@@ -162,9 +236,27 @@ public class Tournament {
                 }
 
         }
-        while(!Schedule.isEmpty()){
+        int i=1;
+       do{
+        Match match=Schedule.removeFirst();
+        Team team1=match.team1;
+        Team team2=match.team2;
+        team1.matchPlayed++;
+        team2.matchPlayed++;
+        LinkedListOfPlayer team1Player=TeamSet.get(team1);
+        LinkedListOfPlayer team2Player=TeamSet.get(team2);
+           if(team1.matchPlayed>0) {
+               team1.setDefault(team1);
+               team1Player.setDefault();
+           }
+           if(team2.matchPlayed>0){
+               team2.setDefault(team2);
+               team2Player.setDefault();
+           }
+           System.out.println("--------"+(i++)+"  match---------");
 
-        }
+            Stimuletion(sc,team1,team2,team1Player,team2Player,over,playerCount);
+        } while(!Schedule.isEmpty());
     }
 
      static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer) {

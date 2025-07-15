@@ -188,10 +188,6 @@ public class LinkedListOfPlayer {
         public AllRounder(String name) {
             super(name);
         }
-        public AllRounder(AllRounder copy){
-            super(copy);
-        }
-
 
         @Override
         public void displayStats() {
@@ -290,6 +286,22 @@ public class LinkedListOfPlayer {
                 System.out.println(" over remaing ("+(Max-current.getOversBowled())+")");
             }
             current = current.next;
+        }
+    }
+    public void setDefault(){
+        Player current = head;
+        while (current != null) {
+            current.onStrike = true;
+            current.isOut = false;
+            current.isPlaying=false;
+            current.runsScored = 0;
+            current.ballsFaced = 0;
+            current.sixes = 0;
+            current.fours = 0;
+            current.oversBowled=0;
+            current.wickets=0;
+            current.runsGiven=0;
+            current=current.next;
         }
     }
     public void displayStats(String Name){
