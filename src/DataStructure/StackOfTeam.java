@@ -51,13 +51,4 @@ public class StackOfTeam {
         return top == null;
     }
 
-
-    public void printStack() {
-        Node current = top;
-        System.out.println("Team Stack (Top to Bottom):");
-        while (current != null) {
-            System.out.println(current.data.getTeamName()); // assuming getTeamName() exists
-            current = current.next;
-        }
-    }
 }

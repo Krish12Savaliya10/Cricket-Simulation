@@ -1,6 +1,9 @@
 package Simulation;
 
 import DataStructure.LinkedListOfPlayer;
+import DataStructure.StackOfBatsman;
+import DataStructure.StackOfBowler;
+import DataStructure.StackOfTeam;
 import Validetion.*;
 import java.util.Scanner;
 import java.util.InputMismatchException;
@@ -15,10 +18,10 @@ public class MatchSimulation {
     static Team team2;
     private static LinkedListOfPlayer.Player Batsman1;
     private static LinkedListOfPlayer.Player Batsman2;
-    private static Stack<LinkedListOfPlayer.Player> Bat1;
-    private static Stack<LinkedListOfPlayer.Player> Bat2;
-    private static Stack<LinkedListOfPlayer.Bowler> Ball;
-    private static Stack<Team> BatTeam;
+    private static StackOfBatsman Bat1;
+    private static StackOfBatsman Bat2;
+    private static StackOfBowler Ball;
+    private static StackOfTeam BatTeam;
     private static int MaxOverByBowler;
     static void inputPlayers(Scanner sc, LinkedListOfPlayer teamPlayers, String teamName, int NumberOfPlayer) {
         int batsmenCount, allRoundersCount, bowlersCount;
@@ -381,26 +384,27 @@ public class MatchSimulation {
                                     int totalOvers, int inning, int NumberOfPlayer, int target){
         int j = 0;
         int i;
-        final int DOTBALL = 0;
+        final int dotBall = 0;
         final int SINGLE = 1;
         final int DOUBLE = 2;
-        final int ThrEERUNS = 3;
-        final int BOUNDRY = 4;
+        final int threeRuns = 3;
+        final int FOUR = 4;
         final int SIX = 6;
         LinkedListOfPlayer.Bowler Bowler = getValidBowler(sc, isTeam1Batting ? team2Players : team1Players, null);
         Stack<String> ThisOver = new Stack<>();
 
-        outerloop: for (i = 0; i < totalOvers; i++) {
+        outerLoop: for (i = 0; i < totalOvers; i++) {
 
             ThisOver.clear();
 
             for (j = 0; j < 6; j++) {
 
 
+
+                displayScorecard(i, j, BattingTeam, Batsman1, Batsman2, Bowler, target, inning);
                 if (!ThisOver.isEmpty()) {
                     System.out.println("Over " + (i + 1) + ":" + ThisOver);
                 }
-                displayScorecard(i, j, BattingTeam, Batsman1, Batsman2, Bowler, target, inning);
 
                 LinkedListOfPlayer.Player CurrentBatsman = Batsman1.isOnStrike() ? Batsman1 : Batsman2;
                 String runInput = getValidRunInput(sc);
@@ -412,7 +416,7 @@ public class MatchSimulation {
 
                 switch (runInput) {
                     case "0":
-                        handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, DOTBALL, "DotBall");
+                        handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, dotBall, "DotBall");
                         break;
 
                     case "1":
@@ -424,11 +428,11 @@ public class MatchSimulation {
                         break;
 
                     case "3":
-                        handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, ThrEERUNS, "Three runs");
+                        handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, threeRuns, "Three runs");
                         break;
 
                     case "4":
-                        handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, BOUNDRY , "Boundary");
+                        handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, FOUR , "Boundary");
                         break;
 
                     case "6":
@@ -452,7 +456,7 @@ public class MatchSimulation {
                     case "O":
                         boolean end = handleWicket(sc, BattingTeam, Bowler, ThisOver, NumberOfPlayer, isTeam1Batting);
                         if (end)
-                            break outerloop;
+                            break outerLoop;
                         break;
 
                     case "U":
@@ -462,24 +466,25 @@ public class MatchSimulation {
                         }
                         else {
                             Bat1.pop();
-                            Batsman1=Bat1.pop();
+                            Batsman1 = Bat1.pop();
 
                             Bat2.pop();
-                            Batsman2=Bat2.pop();
+                            Batsman2 = Bat2.pop();
 
                             Ball.pop();
-                            Bowler=Ball.pop();
+                            Bowler = Ball.pop();
 
                             BatTeam.pop();
-                            BattingTeam=BatTeam.pop();
+                            BattingTeam = BatTeam.pop();
 
-                            ThisOver.pop();
-                            if(j==0){
-                                j=4;
-                                i--;
+                            String checkUndo = ThisOver.pop();
+                            if (!checkUndo.matches("[OW]")) {
+                                if (j == 0) {
+                                    j = 4;
+                                    i--;
+                                } else
+                                    j -= 2;
                             }
-                            else
-                                j-=2;
                         }
                         break;
 
@@ -488,9 +493,7 @@ public class MatchSimulation {
                         j--;
                         break;
                 }
-                if (!ThisOver.isEmpty()) {
-                    System.out.println("Over " + (i) + ":" + ThisOver);
-                }
+
                 if(j==5){
                     System.out.println("Enter u/U for change last ball input else press [ENTER]");
                     if(sc.nextLine().equalsIgnoreCase("U")){
@@ -506,7 +509,7 @@ public class MatchSimulation {
 
                 if (inning == 2 && BattingTeam.totalRun >= target) {
                     BattingTeam.won = true;
-                    break outerloop;
+                    break outerLoop;
                 }
             }
             StrickRotete(Batsman1,Batsman2);
@@ -652,10 +655,10 @@ public class MatchSimulation {
     }
 
     public static void Stimuletion(Scanner sc,Team Team1,Team Team2,LinkedListOfPlayer Team1Players,LinkedListOfPlayer Team2Players,int over,int NumberOfPlayer) throws InterruptedException {
-        Bat1=new Stack<>();
-        Bat2=new Stack<>();
-        Ball=new Stack<>();
-        BatTeam=new Stack<>();
+        Bat1=new StackOfBatsman();
+        Bat2=new StackOfBatsman();
+        Ball=new StackOfBowler();
+        BatTeam=new StackOfTeam();
 
         team1 = Team1;
         String team1Name=team1.getTeamName();
