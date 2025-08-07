@@ -1,10 +1,12 @@
 package Simulation;
-
 import DataStructure.LinkedListOfPlayer;
 
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.ArrayList;
 
+import static DataBase.SQLquery.*;
 import static Simulation.MatchSimulation.*;
 
 class Match {
@@ -33,51 +35,68 @@ public class Tournament {
     static ArrayList<Team> Group2 = new ArrayList<>();
     static HashMap<Team, LinkedListOfPlayer> TeamSet=new HashMap<>();
 
-    public static void main(String[] args) throws InterruptedException {
+   public static void organizeMatch() throws InterruptedException, SQLException {
         Scanner sc = new Scanner(System.in);
+
 
         System.out.println("Enter 1 for Single Match");
         System.out.println("Enter 2 for Series");
         System.out.println("Enter 3 for Tournament");
-        int choice = sc.nextInt();
-        System.out.println("Enter number of player player in match per team (6 to 11)");
-        int playerCount=sc.nextInt();
+        int choice = getValidChoice(sc,"",1,3);
+        System.out.println("Enter number of  player in match per team (6 to 11)");
+        int playerCount=getValidChoice(sc,"",6,11);
         int backup=0;
         if(choice!=1){
         System.out.println("Enter number of Backup player (0 to 3)");
-        backup=sc.nextInt();}
-        sc.nextLine();
+        backup=getValidChoice(sc,"",0,3);}
         int over = 0;
+        String TournamentName = "";
+        String host="";
+        int year = 0;
 
         switch (choice) {
             case 1 :
-                TwoTeamsMatches(sc, 1,(playerCount+backup));
+                TwoTeamsMatches(sc, 1,(playerCount));
                 printSchedule();
                 System.out.println("Enter number of over(2 to 50)");
-                over=sc.nextInt();
+                over=getValidChoice(sc,"",2,50);
                 break;
 
             case 2 :
+                System.out.print("Enter series name:");
+                TournamentName=sc.nextLine();
+                System.out.print("Enter host name:");
+                host=sc.nextLine();
+                year=LocalDate.now().getYear();
+                insertTournament(TournamentName,year,host);
                 System.out.print("Enter number of matches (2 to 5): ");
-                int n = sc.nextInt();
-                sc.nextLine();
+                int n = getValidChoice(sc,"",2,5);
                 TwoTeamsMatches(sc, n,(playerCount+backup));
                 printSchedule();
                 System.out.println("Enter number of over(2 to 50)");
-                over=sc.nextInt();
+                over=getValidChoice(sc,"",2,50);
                 break;
 
             case 3 :
-                System.out.println("Enter number of teams (even number for group, min 6, max 12): ");
-                int num = sc.nextInt();
-                sc.nextLine();
+                System.out.print("Enter Tournament name:");
+                TournamentName=sc.nextLine();
+                System.out.print("Enter host name:");
+                host=sc.nextLine();
+                year=LocalDate.now().getYear();
+                insertTournament(TournamentName,year,host);
+                System.out.println("Enter number of teams (even number for team, min 6, max 12): ");
+                int num = getValidChoice(sc,"",6,12);
+                //@@@@@@@@@@@
                 boolean isGroup=false;
                 String teamName;
                 Team addTeam;
-                for (int i = 0; i < num; i++) {
-                    System.out.print("Enter team " + (i + 1) + " name: ");
+                for (int i = 1; i <=num; i++) {
+                    System.out.println("\n==========");
+                    System.out.print("Enter team " + (i) + " name: ");
                     teamName=sc.nextLine().toUpperCase();
                     addTeam=new Team(teamName);
+                    insertTeam(addTeam.hashCode(),teamName);
+                    insertIntoPointsTable(TournamentName,year,addTeam.hashCode());
                     Teams.add(addTeam);
                     TeamSet.put(addTeam,new LinkedListOfPlayer());
                     inputPlayers(sc,TeamSet.get(addTeam),teamName,(playerCount+backup));
@@ -87,7 +106,9 @@ public class Tournament {
                     System.out.println("Enter 1 for non group tournament "+num*(num-1)/2+" matches");
                     System.out.println("Enter 2 for group tournament");
                     int TournamentType=sc.nextInt();
+
                     generateGroups(num);
+
                     if (TournamentType==1){
                         crossGroupMatches(Group1,Group2);
                         sameGroupMatches(Group2,Group1);
@@ -161,14 +182,31 @@ public class Tournament {
 
         }
         int i=1;
+        for(Match match:Schedule){
+            insertSchedule(match.hashCode(),match.team1.hashCode(),match.team2.hashCode());
+        }
        do{
         Match match=Schedule.removeFirst();
         Team team1=match.team1;
         Team team2=match.team2;
+        if(choice!=1){
+            insertTeamMatchStats(match.hashCode(), team1.hashCode(),year, TournamentName);
+            insertTeamMatchStats(match.hashCode(), team2.hashCode(),year, TournamentName);
+        }
+        else{
+            insertTeamMatchStats(match.hashCode(), team1.hashCode(),year, null);
+            insertTeamMatchStats(match.hashCode(), team2.hashCode(),year, null);
+        }
         team1.matchPlayed++;
         team2.matchPlayed++;
         LinkedListOfPlayer team1Player=TeamSet.get(team1);
         LinkedListOfPlayer team2Player=TeamSet.get(team2);
+        for ( LinkedListOfPlayer.Player player:team1Player.getALlPlayer()) {
+           insertPlayerMatchStats(match.hashCode(),player.getPlayerId());
+        }
+        for ( LinkedListOfPlayer.Player player:team2Player.getALlPlayer()) {
+            insertPlayerMatchStats(match.hashCode(),player.getPlayerId());
+        }
            if(team1.matchPlayed>0) {
                team1.setDefault(team1);
                team1Player.setDefault();
@@ -177,26 +215,28 @@ public class Tournament {
                team2.setDefault(team2);
                team2Player.setDefault();
            }
-           System.out.println("--------"+(i++)+"  match---------");
+           System.out.println("--------match "+(i++)+"---------");
 
-            Stimuletion(sc,team1,team2,team1Player,team2Player,over,playerCount);
+            Simulation(sc,team1,team2,team1Player,team2Player,over,playerCount,match.hashCode());
         } while(!Schedule.isEmpty());
     }
 
-     static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer) {
+     static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer) throws SQLException {
         System.out.print("Enter Team 1 name: ");
         String team1name=sc.nextLine();
         Team team1 = new Team(team1name);
+         insertTeam(team1.hashCode(),team1name);
          System.out.print("Enter Team 2 name: ");
          String team2name=sc.nextLine();
          Team team2 = new Team(team2name);
+         insertTeam(team2.hashCode(),team2name);
          TeamSet.put(team1,new LinkedListOfPlayer());
          inputPlayers(sc,TeamSet.get(team1),team1name,numberOfPlayer);
          TeamSet.put(team2,new LinkedListOfPlayer());
          inputPlayers(sc,TeamSet.get(team2),team2name,numberOfPlayer);
 
 
-         for (int i = 0; i < matches; i++) {
+         for (int i = 1; i <=matches; i++) {
             Schedule.add(new Match(team1, team2));
         }
     }
@@ -216,8 +256,8 @@ public class Tournament {
         ArrayList<Match> Team1Schedule=new ArrayList<>();
         ArrayList<Match> Team2Schedule=new ArrayList<>();
         int size = group1.size();
-        for (int i = 0; i < size; i++) {
-            for (int j = i + 1; j < size; j++) {
+        for (int i = 0; i <size; i++) {
+            for (int j = i + 1; j <size; j++) {
                 if((int)(Math.random()*2+1)%2==1) {
                     Team1Schedule.add(new Match(group1.get(i), group1.get(j)));
                     Team2Schedule.add(new Match(group2.get(i), group2.get(j)));
@@ -236,7 +276,6 @@ public class Tournament {
             Schedule.add(Team1Schedule.removeFirst());
             Schedule.add(Team2Schedule.removeFirst());
         }
-
 
     }
 
@@ -270,7 +309,6 @@ public class Tournament {
         System.out.println("Enter 2 for icc type playoff");
         int playoffChoice = sc.nextInt();
         if (playoffChoice == 1) {
-            //team according to points table(from database)
             System.out.println("add semi final 1(1 vs 2)[winner{F1} in final]/[lost{S1} in semi final 2]");
             System.out.println("add eliminator (3 vs 4)[winner{S1} in semi final 2]");
             System.out.println("add semi final 2(S1 vs S2)[winner{F2} in final");
@@ -282,12 +320,11 @@ public class Tournament {
         }
     }
     static void groupPointsTable() {
-        //teams according to both group points table(from database)
         System.out.println("add demi final 1(Group1 1st vs Group2 2nd)[winner{F1} in final");
         System.out.println("add demi final 2(Group2 1st vs Group1 2nd)[winner{F2} in final");
         System.out.println("add final(F1 vs F2)");
     }
-    static void inputPlayers(Scanner sc, LinkedListOfPlayer teamPlayers, String teamName, int NumberOfPlayer) {
+    static void inputPlayers(Scanner sc, LinkedListOfPlayer teamPlayers, String teamName, int NumberOfPlayer) throws SQLException {
         int batsmenCount, allRoundersCount, bowlersCount;
 
         do {
@@ -312,7 +349,11 @@ public class Tournament {
         for (int i = 1; i <= batsmenCount; i++) {
             System.out.print("Batsman " + i + ": ");
             String name = getValidName(sc);
+            int id=(int)((Math.random()*89999)+100000);
+            insertPlayer(id,name,"BATSMAN",teamName);
+            //@@@@@@@@@@@@@@@@@@@@@
             teamPlayers.addBatsman(name);
+            teamPlayers.getPlayer(name).setPlayerId(id);
         }
 
         if (allRoundersCount != 0) {
@@ -320,7 +361,10 @@ public class Tournament {
             for (int i = 1; i <= allRoundersCount; i++) {
                 System.out.print("All-rounder " + i + ": ");
                 String name = getValidName(sc);
+                int id=(int)((Math.random()*89999)+100000);
+                insertPlayer(id,name,"ALLROUNDER",teamName);
                 teamPlayers.addAllrounder(name);
+                teamPlayers.getPlayer(name).setPlayerId(id);
             }
         }
 
@@ -328,7 +372,10 @@ public class Tournament {
         for (int i = 1; i <= bowlersCount; i++) {
             System.out.print("Bowler " + i + ": ");
             String name = getValidName(sc);
+            int id=(int)((Math.random()*89999)+100000);
+            insertPlayer(id,name,"BOWLER",teamName);
             teamPlayers.addBowler(name);
+            teamPlayers.getPlayer(name).setPlayerId(id);
         }
     }
 }

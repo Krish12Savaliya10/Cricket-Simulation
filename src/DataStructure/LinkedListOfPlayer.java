@@ -1,11 +1,14 @@
 package DataStructure;
 
+import java.util.ArrayList;
+
 public class LinkedListOfPlayer {
 
 
     // Base Player class with common batting fields
     public  static class Player{
         protected String playerName;
+        protected int playerId;
         protected boolean onStrike;
         protected boolean isOut;
         protected boolean isPlaying;
@@ -21,8 +24,7 @@ public class LinkedListOfPlayer {
         protected int oversBowled;
         protected int wickets;
         protected int runsGiven;
-        protected int centuries;
-        protected int fifty;
+
 
         protected Player next;
 
@@ -100,22 +102,6 @@ public class LinkedListOfPlayer {
             this.fours = fours;
         }
 
-        public int getFifty() {
-            return fifty;
-        }
-
-        public void setFifty(int fifty) {
-            this.fifty = fifty;
-        }
-
-        public int getCenturies() {
-            return centuries;
-        }
-
-        public void setCenturies(int centuries) {
-            this.centuries = centuries;
-        }
-
         public int getOversBowled() {return oversBowled;}
 
         public void setOversBowled(int oversBowled) {this.oversBowled = oversBowled;}
@@ -131,6 +117,14 @@ public class LinkedListOfPlayer {
 
         public void setPlaying(boolean playing) {
             isPlaying = playing;
+        }
+
+        public int getPlayerId() {
+            return playerId;
+        }
+
+        public void setPlayerId(int playerId) {
+            this.playerId = playerId;
         }
 
         public  void displayStats(){}
@@ -252,6 +246,15 @@ public class LinkedListOfPlayer {
             System.out.println(temp.playerName);
             temp = temp.next;
         }
+    }
+    public ArrayList<Player> getALlPlayer() {
+        ArrayList<Player> players=new ArrayList<>();
+        Player temp = head;
+        while (temp != null) {
+            players.add(temp);
+            temp = temp.next;
+        }
+        return players;
     }
 
     public Player getPlayer(String name) {
