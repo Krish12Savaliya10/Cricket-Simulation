@@ -27,7 +27,6 @@ public class MatchSimulation {
     private static StackOfBowler Ball;
     private static StackOfTeam BatTeam;
     private static int MaxOverByBowler;
-
     static int getValidCount(Scanner sc, int min) {
         while (true) {
             try {
@@ -155,9 +154,9 @@ public class MatchSimulation {
         Batsman2.setOnStrike(temp);
     }
 
-    private static int handleNormalBall(Team battingTeam, LinkedListOfPlayer.Player batsman,
+    private static void handleNormalBall(Team battingTeam, LinkedListOfPlayer.Player batsman,
                                          LinkedListOfPlayer.Bowler bowler, Stack<String> overStack,
-                                         int run,String msg) {
+                                         int run, String msg) {
         System.out.println(msg);
         batsman.setRunsScored(batsman.getRunsScored() + run);
         batsman.setBallsFaced(batsman.getBallsFaced() + 1);
@@ -172,11 +171,11 @@ public class MatchSimulation {
             StrickRotete(Batsman1,Batsman2);
         }
         battingTeam.freeHitActive = false;
-        return run;
     }
 
     private static void handleNoBall(Scanner sc, Team battingTeam, LinkedListOfPlayer.Player batsman,
-                                     LinkedListOfPlayer.Bowler bowler, Stack<String> overStack,int matchId) throws SQLException {
+                                     LinkedListOfPlayer.Bowler bowler, Stack<String> overStack,int matchId,
+                                     int inning,int over,int ball) throws SQLException {
         System.out.println("No ball! Free hit awarded for next ball!");
         battingTeam.freeHitActive = true;
        // battingTeam.totalRun += 1;
@@ -186,14 +185,16 @@ public class MatchSimulation {
         String inNoball = sc.nextLine();
         if (inNoball.equalsIgnoreCase("E")) {
             int extra = Extras(sc, battingTeam, batsman, bowler);
+            updateBallByBallNoBall(matchId,inning,over,ball,0,(extra+1));
             overStack.push("No/" + extra);
         } else if (inNoball.equalsIgnoreCase("O")) {
             handleRunout(sc, battingTeam, Batsman1.isOnStrike() ? Batsman1 : Batsman2,
-                    Batsman1.isOnStrike() ? Batsman2 : Batsman1, bowler,matchId);
+                    Batsman1.isOnStrike() ? Batsman2 : Batsman1, bowler,matchId,inning,over,ball);
             battingTeam.freeHitActive = false;
         } else {
             System.out.println("Enter runs scored off the no ball (0-4)/6");
             int runs = getNoballChoice(sc);
+            updateBallByBallNoBall(matchId,inning,over,ball,runs,1);
             handleNoBall(battingTeam, batsman, bowler, runs);
             overStack.push("No/" + runs);
         }
@@ -223,15 +224,15 @@ public class MatchSimulation {
         return extra;
     }
     private static boolean handleWicket(Scanner sc, Team battingTeam, LinkedListOfPlayer.Bowler bowler,
-                                        Stack<String> overStack, int totalPlayers, boolean isTeam1Batting,int matchID) throws SQLException {
+                                        Stack<String> overStack, int totalPlayers, boolean isTeam1Batting,int matchID, int inning,int over,int ball) throws SQLException {
         // First ask if this is a runout (valid in all cases, including free hit)
         System.out.println("Enter y/Y if this is a Runout else press [ENTER]:");
         boolean isRunout = sc.nextLine().equalsIgnoreCase("y");
 
         if (isRunout) {
-            return handleRunoutWicket(sc, battingTeam, bowler, overStack, totalPlayers,matchID);
+            return handleRunoutWicket(sc, battingTeam, bowler, overStack, totalPlayers,matchID,inning,over,ball);
         } else if (!battingTeam.freeHitActive) {
-            return handleRegularWicket(sc, battingTeam, bowler, overStack, totalPlayers,isTeam1Batting,matchID);
+            return handleRegularWicket(sc, battingTeam, bowler, overStack, totalPlayers,isTeam1Batting,matchID,inning,over,ball);
         } else {
             System.out.println("Free hit active - cannot be out except runout!");
             return false;
@@ -239,23 +240,24 @@ public class MatchSimulation {
     }
 
     private static boolean handleRunoutWicket(Scanner sc, Team battingTeam, LinkedListOfPlayer.Bowler bowler,
-                                              Stack<String> overStack, int totalPlayers,int matchID) throws SQLException {
+                                              Stack<String> overStack, int totalPlayers,int matchID, int inning,int over,int ball) throws SQLException {
         System.out.println("Runout!");
         battingTeam.wicketDown++;
         LinkedListOfPlayer.Player onStrinck = Batsman1.isOnStrike() ? Batsman1 : Batsman2;
 
         int runs = handleRunout(sc, battingTeam, onStrinck,
-                (onStrinck == Batsman1 ? Batsman2 : Batsman1), bowler,matchID);
+                (onStrinck == Batsman1 ? Batsman2 : Batsman1), bowler,matchID,inning,over,ball);
         overStack.push("RO/" + runs);
 
         return battingTeam.wicketDown == totalPlayers - 1;
     }
 
     private static boolean handleRegularWicket(Scanner sc, Team battingTeam, LinkedListOfPlayer.Bowler bowler,
-                                               Stack<String> overStack, int totalPlayers, boolean isTeam1Batting,int matchID) throws SQLException {
+                                               Stack<String> overStack, int totalPlayers, boolean isTeam1Batting,int matchID,int inning,int over,int ball) throws SQLException {
         System.out.println("Wicket!");
         battingTeam.wicketDown++;
         LinkedListOfPlayer.Player outPlayer = Batsman1.isOnStrike() ? Batsman1 : Batsman2;
+        updateBallByBallWicket(matchID,outPlayer.getPlayerId(),inning,over,ball,0);
 
         overStack.push("O");
         bowler.setWickets(bowler.getWickets() + 1);
@@ -294,7 +296,7 @@ public class MatchSimulation {
     }
 
     private static int handleRunout(Scanner sc, Team team, LinkedListOfPlayer.Player striker,
-                                    LinkedListOfPlayer.Player nonStriker, LinkedListOfPlayer.Bowler bowler,int matchID) throws SQLException {
+                                    LinkedListOfPlayer.Player nonStriker, LinkedListOfPlayer.Bowler bowler,int matchID,int inning,int over,int ball) throws SQLException {
         System.out.println("Enter runs scored before runout:");
         int runs = getValidChoice(sc, "Enter runs (0-2):", 0, 2);
 
@@ -321,6 +323,8 @@ public class MatchSimulation {
         updateBattingStatus(matchID,outPlayer.getPlayerId(),"OUT");
         outPlayer.setOut(true);
         outPlayer.setPlaying(false);
+        updateBallByBallWicket(matchID,outPlayer.getPlayerId(),inning,over,ball,runs);
+
 
         // Replace the out player
         if (outPlayer == Batsman1 && runoutEnd==1) {
@@ -388,62 +392,73 @@ public class MatchSimulation {
                     case "0":
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, dotBall, "DotBall");
                             insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                    Bowler.getPlayerId(),dotBall,0,false,null);
+                                    Bowler.getPlayerId(),dotBall,0,null,"DotBall");
                         break;
 
                     case "1":
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, SINGLE, "Single");
                         insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                Bowler.getPlayerId(),SINGLE,0,false,null);
+                                Bowler.getPlayerId(),SINGLE,0,null,"Single");
+
                         break;
 
                     case "2":
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, DOUBLE, "Double");
                         insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                Bowler.getPlayerId(),DOUBLE,0,false,null);
+                                Bowler.getPlayerId(),DOUBLE,0,null,"Double");
+
                         break;
 
                     case "3":
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, threeRuns, "Three runs");
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, DOUBLE, "Double");
                         insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                Bowler.getPlayerId(),threeRuns,0,false,null);
+                                Bowler.getPlayerId(),threeRuns,0,null,"Three runs");
+
                         break;
 
                     case "4":
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, FOUR , "Boundary");
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, DOUBLE, "Double");
                         insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                Bowler.getPlayerId(),FOUR,0,false,null);
+                                Bowler.getPlayerId(),FOUR,0,null,"Boundary");
+
                         break;
 
                     case "6":
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, SIX, "Six");
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, DOUBLE, "Double");
                         insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                Bowler.getPlayerId(),SIX,0,false,null);
+                                Bowler.getPlayerId(),SIX,0,null,"Six");
+
                         break;
 
                     case "N":
-                        handleNoBall(sc, BattingTeam, CurrentBatsman, Bowler, ThisOver,matchId);
+                        insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
+                                Bowler.getPlayerId(),dotBall,0,null,"NoBall");
+                        handleNoBall(sc, BattingTeam, CurrentBatsman, Bowler, ThisOver,matchId,inning,i,j);
+
                         j--;
                         break;
 
                     case "W":
                        int wideRuns = handleWide(sc, BattingTeam, CurrentBatsman, Bowler, ThisOver);
                         insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                Bowler.getPlayerId(),0,wideRuns,false,null);
+                                Bowler.getPlayerId(),0,wideRuns,null,"Wide");
                         j--;
                         break;
 
                     case "E":
                         int extras=handleExtras(sc, BattingTeam, CurrentBatsman, Bowler, ThisOver);
                         insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
-                                Bowler.getPlayerId(),0,extras,false,null);
+                                Bowler.getPlayerId(),0,extras,null,"Extras");
+
                         break;
 
                     case "O":
-                        boolean end = handleWicket(sc, BattingTeam, Bowler, ThisOver, NumberOfPlayer, isTeam1Batting,matchId);
+                        insertBallByBall(matchId,inning,i,j, CurrentBatsman.getPlayerId(),nonStricker.getPlayerId(),
+                                Bowler.getPlayerId(),0,0,null,"Wicket");
+                        boolean end = handleWicket(sc, BattingTeam, Bowler, ThisOver, NumberOfPlayer, isTeam1Batting,matchId,inning,i,j);
                         if (end)
                             break outerLoop;
                         break;
@@ -467,6 +482,7 @@ public class MatchSimulation {
                             BattingTeam = BatTeam.pop();
 
                             String checkUndo = ThisOver.pop();
+                            undoLastBallOfMatchInning(matchId,inning);
                             if (!checkUndo.matches("[NW]")) {
                                     j -= 2;
                             }
@@ -480,7 +496,7 @@ public class MatchSimulation {
                 }
                 updateBattingStats(matchId,Batsman1.getPlayerId(),Batsman1.getRunsScored(),Batsman1.getBallsFaced(), Batsman1.getFours(), Batsman1.getSixes());
                 updateBattingStats(matchId,Batsman2.getPlayerId(),Batsman2.getRunsScored(),Batsman2.getBallsFaced(), Batsman2.getFours(), Batsman2.getSixes());
-                updateTeamBattingStats(matchId,BattingTeam.hashCode(),BattingTeam.totalRun,BattingTeam.wicketDown,Double.parseDouble(i+"."+j));
+                updateTeamBattingStats(matchId,BattingTeam.teamId,BattingTeam.totalRun,BattingTeam.wicketDown,Double.parseDouble(i+"."+((j==-1)?0:j)));
 
                 if(j==5){
                     System.out.println("Enter u/U for change last ball input else press [ENTER]");
@@ -510,7 +526,7 @@ public class MatchSimulation {
         }
         updateBattingStats(matchId,Batsman1.getPlayerId(),Batsman1.getRunsScored(),Batsman1.getBallsFaced(), Batsman1.getFours(), Batsman1.getSixes());
         updateBattingStats(matchId,Batsman2.getPlayerId(),Batsman2.getRunsScored(),Batsman2.getBallsFaced(), Batsman2.getFours(), Batsman2.getSixes());
-        updateTeamBattingStats(matchId,BattingTeam.hashCode(),BattingTeam.totalRun,BattingTeam.wicketDown,Double.parseDouble(i+"."+j));
+        updateTeamBattingStats(matchId,BattingTeam.teamId,BattingTeam.totalRun,BattingTeam.wicketDown,Double.parseDouble(i+"."+j));
 
         if (inning == 1) {
             System.out.println("Inning 1 completed.");
@@ -622,7 +638,7 @@ public class MatchSimulation {
 
         System.out.println("\n=== MATCH RESULT ===");
         if (BattingTeam.won) {
-            updateWinner(MatchId,BattingTeam.hashCode());
+            updateWinner(MatchId,BattingTeam.teamId);
             System.out.println(BattingTeam.teamName + " won by " + (numberOfPlayer - BattingTeam.wicketDown - 1) + " wicket(s).");
             BattingTeam.setWin(BattingTeam.getWin()+1);
             BattingTeam.setPoints(BattingTeam.getPoints()+2);
@@ -633,13 +649,13 @@ public class MatchSimulation {
         } else if (BattingTeam == team1) {
             System.out.println(team2.teamName + " won by " + (team2.totalRun - team1.totalRun ) + " runs.");
             team2.setWin(team2.getWin()+1);
-            updateWinner(MatchId,team2.hashCode());
+            updateWinner(MatchId,team2.teamId);
             team2.setPoints(team2.getPoints()+2);
             team1.setLose(team1.getLose()+1);
         } else if (BattingTeam == team2) {
             System.out.println(team1.teamName + " won by " + (team1.totalRun - team2.totalRun ) + " runs.");
             team1.setWin(team1.getWin()+1);
-            updateWinner(MatchId,team1.hashCode());
+            updateWinner(MatchId,team1.teamId);
             team1.setPoints(team1.getPoints()+2);
             team2.setLose(team2.getLose()+1);
         } else {

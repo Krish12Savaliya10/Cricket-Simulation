@@ -40,6 +40,7 @@ public class LinkedListOfPlayer {
             this.fours = 0;
         }
         public  Player(Player Copy) {
+            this.playerId=Copy.playerId;
             this.playerName = Copy.playerName;
             this.onStrike = Copy.onStrike;
             this.isOut = Copy.isOut;

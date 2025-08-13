@@ -13,7 +13,7 @@ public class Team {
     int lose;
     int points;
     int matchPlayed;
-    double NRR;
+    int teamId;
     boolean won;
     boolean freeHitActive;
 
@@ -76,4 +76,8 @@ public class Team {
     public void setPoints(int points) {
         this.points = points;
     }
+
+    public int getTeamId() {return teamId;}
+
+    public void setTeamId(int teamId) {this.teamId = teamId;}
 }

@@ -12,68 +12,9 @@ public class SQLquery {
     }
 
     //Insert user: INSERT INTO Users (full_name, email, password, role) VALUES (?, ?, ?, ?)
-    public static void signup() throws Exception {
-        Scanner sc = new Scanner(System.in);
-
-        System.out.print("Enter Full Name: ");
-        String fullName = sc.nextLine();
-
-        System.out.print("Enter Email ID: ");
-        String email = sc.nextLine();
-
-        System.out.print("Enter Password: ");
-        String password = sc.nextLine();
-
-        System.out.print("Enter Role (HOST / AUDIENCE / AUTHOR): ");
-        String role = sc.nextLine().toUpperCase();
-
-        Connection con = getCon();
-        String sql = "INSERT INTO Users (full_name, email, password, role) VALUES (?, ?, ?, ?)";
-        PreparedStatement ps = con.prepareStatement(sql);
-
-        ps.setString(1, fullName);
-        ps.setString(2, email);
-        ps.setString(3, password);
-        ps.setString(4, role);
-
-        try {
-            ps.executeUpdate();
-            System.out.println("Signup successful!");
-        } catch (SQLIntegrityConstraintViolationException e) {
-            System.out.println("Email already exists. Please login.");
-        }
-        con.close();
-    }
 
     //Login: SELECT * FROM Users WHERE email = ? AND password = ?
-    public static String login() throws Exception {
-        Scanner sc = new Scanner(System.in);
 
-        System.out.print("Enter Email ID: ");
-        String email = sc.nextLine();
-
-        System.out.print("Enter Password: ");
-        String password = sc.nextLine();
-
-        Connection con = getCon();
-        String sql = "SELECT * FROM Users WHERE email = ? AND password = ?";
-        PreparedStatement ps = con.prepareStatement(sql);
-
-        ps.setString(1, email);
-        ps.setString(2, password);
-
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            System.out.println("Login successful! Welcome, " + rs.getString("full_name"));
-            String role= rs.getString("role");
-            System.out.println("Role: " + role);
-            return role;
-        } else {
-            System.out.println("Invalid credentials.Enter valid input");
-            return login();
-        }
-
-    }
 
     //insert team: INSERT INTO Users (team_name) VALUES (name)
     public static void insertTeam(int teamId,String name) throws SQLException {
@@ -95,43 +36,46 @@ public class SQLquery {
         ps.setString(4, teamName);
         ps.executeUpdate();
     }
-    public static void insertSchedule(int match_id,int team1Id,int team2Id) throws SQLException {
+    public static void insertSchedule(int match_id,int team1Id,int team2Id,String emailId,int matchNumber) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO Matches(match_id ,team1_id,team2_id) VALUES (?,?,?)";
+        String sql = "INSERT INTO Matches(match_id ,Host_Id,team1_id,team2_id,Match_Number) VALUES (?,(select user_id from Users where email=?),?,?,?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1, match_id);
-        ps.setInt(2, team1Id );
-        ps.setInt(3, team2Id);
+        ps.setString(2, emailId);
+        ps.setInt(3, team1Id );
+        ps.setInt(4, team2Id);
+        ps.setInt(5, matchNumber);
         ps.executeUpdate();
     }
-    public static void insertTournament(String tournament_name,int year,String host) throws SQLException {
+    public static void insertTournament(String tournament_name,int year,String email) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO Tournaments(tournament_name ,year,host) VALUES (?,?,?)";
+        String sql = "INSERT INTO Tournaments(tournament_name ,year,host_id) VALUES (?,?,(select user_id from Users where email=?))";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, tournament_name);
         ps.setInt(2, year );
-        ps.setString(3, host);
+        ps.setString(3, email);
         ps.executeUpdate();
     }
     public static void insertIntoPointsTable(String tournament_name,int tourYear,int team_id) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO PointsTable(tournament_id ,team_id) VALUES (?,?,?)";
+        String sql = "INSERT INTO PointsTable(tournament_id ,team_id) VALUES ((SELECT tournament_id from Tournaments where (tournament_name=? and year=?) ),?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, tournament_name);
         ps.setInt(2, tourYear );
         ps.setInt(3, team_id);
         ps.executeUpdate();
     }
-    public static void insertTeamMatchStats(int match_id, int  team_id, int tourYear, String tournament_name) throws SQLException {
+    public static void insertTeamMatchStats(int match_id, int  team_id, int tourYear, String tournament_name,String email) throws SQLException {
         Connection con = getCon();
         String sql = "INSERT INTO TeamMatchStats(tournament_id, match_id, team_id) " +
-                "VALUES ((SELECT tournament_id FROM Tournaments WHERE tournament_name = ? AND year = ?), ?, ? ) ";
+                "VALUES ((SELECT tournament_id FROM Tournaments WHERE tournament_name = ? AND year = ? AND host_id=(SELECT user_id from Users where email=?)), ?, ? ) ";
 
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, tournament_name);
         ps.setInt(2, tourYear);
-        ps.setInt(3, match_id);
-        ps.setInt(4, team_id);
+        ps.setString(3, email);
+        ps.setInt(4, match_id);
+        ps.setInt(5, team_id);
         ps.executeUpdate();
     }
 
@@ -148,12 +92,12 @@ public class SQLquery {
 
     public static void insertBallByBall(int match_id, int innings, int over_number, int ball_number,
                                         int striker_id, int non_striker_id, int bowler_id,
-                                        int runs_batsman, int extras_runs, boolean is_wicket,
-                                        Integer out_player_id) throws SQLException {
+                                        int runs_batsman, int extras_runs,
+                                        Integer out_player_id,String ball_summary) throws SQLException {
 
         Connection con = getCon(); // Your method to get DB connection
         String sql = "INSERT INTO ball_by_ball (match_id, innings, over_number, ball_number, striker_id, " +
-                "non_striker_id, bowler_id, runs_batsman, extras_runs, is_wicket, out_player_id) " +
+                "non_striker_id, bowler_id, runs_batsman, extras_runs, out_player_id, ball_summary) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         PreparedStatement ps = con.prepareStatement(sql);
@@ -166,13 +110,13 @@ public class SQLquery {
         ps.setInt(7, bowler_id);
         ps.setInt(8, runs_batsman);
         ps.setInt(9, extras_runs);
-        ps.setBoolean(10, is_wicket);
+        ps.setString(11, ball_summary);
 
         // Set NULL if no wicket (nullable out_player_id)
         if (out_player_id != null) {
-            ps.setInt(11, out_player_id);
+            ps.setInt(10, out_player_id);
         } else {
-            ps.setNull(11, java.sql.Types.INTEGER);
+            ps.setNull(10, java.sql.Types.INTEGER);
         }
 
         ps.executeUpdate();
@@ -237,6 +181,56 @@ public class SQLquery {
         ps.setInt(1, winningTeamId);
         ps.setInt(2, match_id);
         ps.executeUpdate();
+    }
+
+    public static void updateBallByBallNoBall(int match_id,int inning,int over,int ball,int scoredRun,int extras) throws SQLException {
+        Connection con = getCon();
+        String sql = "UPDATE ball_by_ball SET  runs_batsman = ?, extras_runs=? WHERE match_id = ? and over_number=? and ball_number=? and innings=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, scoredRun);
+        ps.setInt(2, extras);
+        ps.setInt(3,match_id);
+        ps.setInt(4,over);
+        ps.setInt(5,ball);
+        ps.setInt(6,inning);
+        ps.executeUpdate();
+    }
+
+    public static void updateBallByBallWicket(int match_id,int outPlayerId,int inning,int over,int ball,int scoredRun) throws SQLException {
+        Connection con = getCon();
+        String sql = "UPDATE ball_by_ball SET  runs_batsman = ?,out_player_id=? WHERE (match_id = ? and over_number=? and ball_number=? and innings=? and ball_summary='Wicket')";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, scoredRun);
+        ps.setInt(2, outPlayerId);
+        ps.setInt(3,match_id);
+        ps.setInt(4,over);
+        ps.setInt(5,ball);
+        ps.setInt(6,inning);
+        ps.executeUpdate();
+    }
+
+    public static void undoLastBallOfMatchInning(int matchId, int innings) throws SQLException {
+        Connection con = getCon();
+        String sql = "DELETE FROM ball_by_ball WHERE id = ( " +
+                "SELECT id FROM (SELECT id FROM ball_by_ball " +
+                "WHERE match_id = ? AND innings = ? " +
+                "ORDER BY over_number DESC, ball_number DESC, timestamp DESC LIMIT 1) AS temp)";
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, matchId);
+        ps.setInt(2, innings);
+        ps.executeUpdate();
+        ps.close();
+    }
+
+    public static void isMatchLive(String emailID) throws SQLException {
+        Connection con = getCon();
+        String sql = "SELECT match_id from Matches where (match_status='LIVE' or match_status='UPCOMING') and Host_Id=SELECT user_id from Users where email=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1,emailID);
+        ResultSet rs=ps.executeQuery();
+
+        ps.close();
     }
 
 
