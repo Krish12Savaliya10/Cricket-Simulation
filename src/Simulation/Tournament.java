@@ -1,3 +1,4 @@
+
 package Simulation;
 import DataStructure.LinkedListOfPlayer;
 
@@ -9,25 +10,6 @@ import java.util.ArrayList;
 import static DataBase.SQLquery.*;
 import static Simulation.MatchSimulation.*;
 
-class Match {
-    Team team1;
-    Team team2;
-    int MatchId;
-
-
-    public Match(Team team1, Team team2) {
-        this.team1 = team1;
-        this.team2 = team2;
-    }
-
-    @Override
-    public String toString() {
-        return team1 + " vs " + team2;
-    }
-
-
-}
-
 public class Tournament {
 
     static ArrayList<Match> Schedule = new ArrayList<>();
@@ -36,7 +18,7 @@ public class Tournament {
     static ArrayList<Team> Group2 = new ArrayList<>();
     static HashMap<Team, LinkedListOfPlayer> TeamSet=new HashMap<>();
 
-   public static void organizeMatch(String email) throws InterruptedException, SQLException {
+    public static void organizeMatch(String email) throws InterruptedException, SQLException {
         Scanner sc = new Scanner(System.in);
 
 
@@ -85,8 +67,7 @@ public class Tournament {
                     System.out.println("\n==========");
                     System.out.print("Enter team " + (i) + " name: ");
                     teamName=sc.nextLine().toUpperCase();
-                    addTeam=new Team(teamName);
-                    addTeam.teamId=(int)((Math.random()*89999)+100000);
+                    addTeam=new Team(teamName,(int)((Math.random()*89999)+100000));
                     insertTeam(addTeam.teamId,teamName);
                     insertIntoPointsTable(TournamentName,year,addTeam.teamId);
                     Teams.add(addTeam);
@@ -95,66 +76,66 @@ public class Tournament {
 
                 }
 
-                    System.out.println("Enter 1 for non group tournament "+num*(num-1)/2+" matches");
-                    System.out.println("Enter 2 for group tournament");
-                    int TournamentType=sc.nextInt();
+                System.out.println("Enter 1 for non group tournament "+num*(num-1)/2+" matches");
+                System.out.println("Enter 2 for group tournament");
+                int TournamentType=sc.nextInt();
 
-                    generateGroups(num);
+                generateGroups(num);
 
-                    if (TournamentType==1){
-                        crossGroupMatches(Group1,Group2);
-                        sameGroupMatches(Group2,Group1);
-                        printSchedule();
-                    } else if (TournamentType==2) {
-                        isGroup=true;
-                        System.out.println("Group 1: " + Group1);
-                        System.out.println("Group 2: " + Group2);
-                        System.out.println("Choose Schedule Type:");
-                        System.out.println("1. Same Group Matches Only " + (Group1.size()*(Group1.size()-1)) + " Matches"); // 20
-                        System.out.println("2. Other Group Matches Only " + (Group1.size()*Group1.size()) + " Matches"); // 25
-                        System.out.println("3. 1 match with group and 2 match with other group " + (Group1.size()*(Group1.size()-1) + 2*(Group1.size()*Group1.size())) + " Matches"); // 60
-                        System.out.println("4. 2 match with group and 1 match with other group " + (2*(Group1.size()*(Group1.size()-1)) + (Group1.size()*Group1.size())) + " Matches"); // 45
-                        System.out.println("5. Play with all other teams twice " + (2*( (Group1.size()*(Group1.size()-1)) + (Group1.size()*Group1.size()) )) + " Matches"); // 70
-                        int opt = sc.nextInt();
+                if (TournamentType==1){
+                    crossGroupMatches(Group1,Group2);
+                    sameGroupMatches(Group2,Group1);
+                    printSchedule();
+                } else if (TournamentType==2) {
+                    isGroup=true;
+                    System.out.println("Group 1: " + Group1);
+                    System.out.println("Group 2: " + Group2);
+                    System.out.println("Choose Schedule Type:");
+                    System.out.println("1. Same Group Matches Only " + (Group1.size()*(Group1.size()-1)) + " Matches"); // 20
+                    System.out.println("2. Other Group Matches Only " + (Group1.size()*Group1.size()) + " Matches"); // 25
+                    System.out.println("3. 1 match with group and 2 match with other group " + (Group1.size()*(Group1.size()-1) + 2*(Group1.size()*Group1.size())) + " Matches"); // 60
+                    System.out.println("4. 2 match with group and 1 match with other group " + (2*(Group1.size()*(Group1.size()-1)) + (Group1.size()*Group1.size())) + " Matches"); // 45
+                    System.out.println("5. Play with all other teams twice " + (2*( (Group1.size()*(Group1.size()-1)) + (Group1.size()*Group1.size()) )) + " Matches"); // 70
+                    int opt = sc.nextInt();
 
-                        switch (opt) {
-                            case 1:
-                                sameGroupMatches(Group1, Group2);
-                                break;
-                            case 2:
-                                crossGroupMatches(Group1, Group2);
-                                break;
-                            case 3:
-                                crossGroupMatches(Group1, Group2);
-                                Shuffle();
-                                sameGroupMatches(Group1, Group2);
-                                Shuffle();
-                                crossGroupMatches(Group2, Group1);
-                                break;
-                            case 4:
-                                sameGroupMatches(Group1, Group2);
-                                Shuffle();
-                                crossGroupMatches(Group1, Group2);
-                                Shuffle();
-                                sameGroupMatches(Group2, Group1);
-                                break;
-                            case 5:
-                                sameGroupMatches(Group1,Group2);
-                                Shuffle();
-                                crossGroupMatches(Group2,Group1);
-                                Shuffle();
-                                sameGroupMatches(Group2,Group1);
-                                Shuffle();
-                                crossGroupMatches(Group1,Group2);
-                                break;
+                    switch (opt) {
+                        case 1:
+                            sameGroupMatches(Group1, Group2);
+                            break;
+                        case 2:
+                            crossGroupMatches(Group1, Group2);
+                            break;
+                        case 3:
+                            crossGroupMatches(Group1, Group2);
+                            Shuffle();
+                            sameGroupMatches(Group1, Group2);
+                            Shuffle();
+                            crossGroupMatches(Group2, Group1);
+                            break;
+                        case 4:
+                            sameGroupMatches(Group1, Group2);
+                            Shuffle();
+                            crossGroupMatches(Group1, Group2);
+                            Shuffle();
+                            sameGroupMatches(Group2, Group1);
+                            break;
+                        case 5:
+                            sameGroupMatches(Group1,Group2);
+                            Shuffle();
+                            crossGroupMatches(Group2,Group1);
+                            Shuffle();
+                            sameGroupMatches(Group2,Group1);
+                            Shuffle();
+                            crossGroupMatches(Group1,Group2);
+                            break;
 
-                            default:
-                                System.out.println("Invalid option selected");
-                                break;
-                        }
-                        printSchedule();
-                        System.out.println("Enter number of over(2 to 50)");
-                        over=sc.nextInt();
+                        default:
+                            System.out.println("Invalid option selected");
+                            break;
+                    }
+                    printSchedule();
+                    System.out.println("Enter number of over(2 to 50)");
+                    over=sc.nextInt();
                 }
                 System.out.println("Point table option");
                 if(isGroup){
@@ -176,65 +157,68 @@ public class Tournament {
         int i=1;
         int matchNumber=1;
         for(Match match:Schedule){
-            match.MatchId=(int)((Math.random()*89999)+100000);
             insertSchedule(match.MatchId, match.team1.teamId, match.team2.teamId, email,matchNumber);
             matchNumber++;
         }
-       do{
-        Match match=Schedule.removeFirst();
-        Team team1=match.team1;
-        Team team2=match.team2;
-        if(choice!=1){
-            insertTeamMatchStats(match.MatchId, team1.teamId, year, TournamentName,email);
-            insertTeamMatchStats(match.MatchId, team2.teamId, year, TournamentName,email);
-        }
-        else{
-            insertTeamMatchStats(match.MatchId, team1.teamId,year, "Series",email);
-            insertTeamMatchStats(match.MatchId, team2.teamId,year, "Series",email);
-        }
-        team1.matchPlayed++;
-        team2.matchPlayed++;
-        LinkedListOfPlayer team1Player=TeamSet.get(team1);
-        LinkedListOfPlayer team2Player=TeamSet.get(team2);
-        for ( LinkedListOfPlayer.Player player:team1Player.getALlPlayer()) {
-           insertPlayerMatchStats(match.MatchId,player.getPlayerId());
-        }
-        for ( LinkedListOfPlayer.Player player:team2Player.getALlPlayer()) {
-            insertPlayerMatchStats(match.MatchId,player.getPlayerId());
-        }
-           if(team1.matchPlayed>0) {
-               team1.setDefault(team1);
-               team1Player.setDefault();
-           }
-           if(team2.matchPlayed>0){
-               team2.setDefault(team2);
-               team2Player.setDefault();
-           }
-           System.out.println("--------match "+(i++)+"---------");
+        do{
+            Match match=Schedule.removeFirst();
+            Team team1=match.team1;
+            Team team2=match.team2;
+            if(choice!=1){
+                insertTeamMatchStats(match.MatchId, team1.teamId, year, TournamentName,email);
+                insertTeamMatchStats(match.MatchId, team2.teamId, year, TournamentName,email);
+            }
+            else{
+                insertTeamMatchStats(match.MatchId, team1.teamId,year, "Series",email);
+                insertTeamMatchStats(match.MatchId, team2.teamId,year, "Series",email);
+            }
+            team1.matchPlayed++;
+            team2.matchPlayed++;
+            LinkedListOfPlayer team1Player=TeamSet.get(team1);
+            LinkedListOfPlayer team2Player=TeamSet.get(team2);
+            for ( LinkedListOfPlayer.Player player:team1Player.getALlPlayer()) {
+                insertPlayerMatchStats(match.MatchId,player.getPlayerId());
+            }
+            for ( LinkedListOfPlayer.Player player:team2Player.getALlPlayer()) {
+                insertPlayerMatchStats(match.MatchId,player.getPlayerId());
+            }
+            if(team1.matchPlayed>0) {
+                team1.setDefault(team1);
+                team1Player.setDefault();
+            }
+            if(team2.matchPlayed>0){
+                team2.setDefault(team2);
+                team2Player.setDefault();
+            }
+            System.out.println("--------match "+(i++)+"---------");
 
             Simulation(sc,team1,team2,team1Player,team2Player,over,playerCount,match.MatchId);
         } while(!Schedule.isEmpty());
     }
+    public static void setScheduleFromDB(String email) throws SQLException {
+        Teams.addAll(getTeamData(email));
+        System.out.println(Teams);
+        Schedule.addAll(getSchedule(email,Teams));
+        printSchedule();
+    }
 
-     static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer) throws SQLException {
+    static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer) throws SQLException {
         System.out.print("Enter Team 1 name: ");
         String team1name=sc.nextLine();
-        Team team1 = new Team(team1name);
-         team1.teamId=(int)((Math.random()*89999)+100000);
-         insertTeam(team1.teamId,team1name);
-         System.out.print("Enter Team 2 name: ");
-         String team2name=sc.nextLine();
-         Team team2 = new Team(team2name);
-         team2.teamId=(int)((Math.random()*89999)+100000);
-         insertTeam(team2.teamId,team2name);
-         TeamSet.put(team1,new LinkedListOfPlayer());
-         inputPlayers(sc,TeamSet.get(team1),team1name,numberOfPlayer);
-         TeamSet.put(team2,new LinkedListOfPlayer());
-         inputPlayers(sc,TeamSet.get(team2),team2name,numberOfPlayer);
+        Team team1 = new Team(team1name,(int)((Math.random()*89999)+100000));
+        insertTeam(team1.teamId,team1name);
+        System.out.print("Enter Team 2 name: ");
+        String team2name=sc.nextLine();
+        Team team2 = new Team(team2name,(int)((Math.random()*89999)+100000));
+        insertTeam(team2.teamId,team2name);
+        TeamSet.put(team1,new LinkedListOfPlayer());
+        inputPlayers(sc,TeamSet.get(team1),team1name,numberOfPlayer);
+        TeamSet.put(team2,new LinkedListOfPlayer());
+        inputPlayers(sc,TeamSet.get(team2),team2name,numberOfPlayer);
 
 
-         for (int i = 1; i <=matches; i++) {
-            Schedule.add(new Match(team1, team2));
+        for (int i = 1; i <=matches; i++) {
+            Schedule.add(new Match(team1, team2,(int)((Math.random()*89999)+100000)));
         }
     }
     static void Shuffle(){
@@ -256,12 +240,12 @@ public class Tournament {
         for (int i = 0; i <size; i++) {
             for (int j = i + 1; j <size; j++) {
                 if((int)(Math.random()*2+1)%2==1) {
-                    Team1Schedule.add(new Match(group1.get(i), group1.get(j)));
-                    Team2Schedule.add(new Match(group2.get(i), group2.get(j)));
+                    Team1Schedule.add(new Match(group1.get(i), group1.get(j),(int)((Math.random()*89999)+100000)));
+                    Team2Schedule.add(new Match(group2.get(i), group2.get(j),(int)((Math.random()*89999)+100000)));
                 }
                 else{
-                    Team1Schedule.add(new Match(group1.get(j), group1.get(i)));
-                    Team2Schedule.add(new Match(group2.get(j), group2.get(i)));
+                    Team1Schedule.add(new Match(group1.get(j), group1.get(i),(int)((Math.random()*89999)+100000)));
+                    Team2Schedule.add(new Match(group2.get(j), group2.get(i),(int)((Math.random()*89999)+100000)));
                 }
             }
         }
@@ -284,9 +268,9 @@ public class Tournament {
             }
             for(int j=0;j<group2.size();j++){
                 if((int)(Math.random()*2+1)%2==1)
-                    Schedule.add(new Match(group1.get(j), group2.get(j)));
+                    Schedule.add(new Match(group1.get(j), group2.get(j),(int)((Math.random()*89999)+100000)));
                 else
-                    Schedule.add(new Match(group2.get(j), group1.get(j)));
+                    Schedule.add(new Match(group2.get(j), group1.get(j),(int)((Math.random()*89999)+100000)));
 
             }
         }

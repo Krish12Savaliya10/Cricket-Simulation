@@ -6,6 +6,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Scanner;
 import static DataBase.SQLquery.*;
 import static Simulation.Tournament.organizeMatch;
+import static Simulation.Tournament.setScheduleFromDB;
 
 public class LoginSingup {
     public static void main(String[] args) throws Exception {
@@ -83,7 +84,7 @@ public class LoginSingup {
                             break;
 
                         case 2:
-
+                            setScheduleFromDB(email);
                             break;
                     }
                 }while (choiceForMatch!=3);

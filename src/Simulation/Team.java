@@ -2,6 +2,8 @@ package Simulation;
 
 import DataStructure.LinkedListOfPlayer;
 
+import java.util.ArrayList;
+
 public class Team {
     public LinkedListOfPlayer players;
     int totalRun;
@@ -17,8 +19,9 @@ public class Team {
     boolean won;
     boolean freeHitActive;
 
-    public Team(String teamName) {
+    public Team(String teamName,int teamId) {
         this.teamName = teamName;
+        this.teamId=teamId;
         totalRun = 0;
         overPlayed = 0;
         wicketDown = 0;
@@ -80,4 +83,13 @@ public class Team {
     public int getTeamId() {return teamId;}
 
     public void setTeamId(int teamId) {this.teamId = teamId;}
+
+    public static Team getTeamById(ArrayList<Team> teams, int teamId) {
+        for (Team team : teams) {
+            if (team.getTeamId() == teamId) {
+                return team;
+            }
+        }
+        return null;
+    }
 }

@@ -1,7 +1,13 @@
 package DataBase;
 
+import Simulation.Match;
+import Simulation.Team;
+
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Scanner;
+
+import static Simulation.Team.getTeamById;
 
 public class SQLquery {
     public static Connection getCon() throws SQLException {
@@ -223,17 +229,62 @@ public class SQLquery {
         ps.close();
     }
 
-    public static void isMatchLive(String emailID) throws SQLException {
-        Connection con = getCon();
-        String sql = "SELECT match_id from Matches where (match_status='LIVE' or match_status='UPCOMING') and Host_Id=SELECT user_id from Users where email=?";
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1,emailID);
-        ResultSet rs=ps.executeQuery();
+//    public static void isMatchLive(String emailID) throws SQLException {
+//        Connection con = getCon();
+//        String sql = "SELECT match_id from Matches where (match_status='LIVE' or match_status='UPCOMING') and Host_Id=SELECT user_id from Users where email=?";
+//        PreparedStatement ps = con.prepareStatement(sql);
+//        ps.setString(1,emailID);
+//        ResultSet rs=ps.executeQuery();
+//
+//        ps.close();
+//    }
 
+    public static ArrayList<Team> getTeamData(String email) throws SQLException {
+        Connection con = getCon();
+        ArrayList<Team> teams = new ArrayList<>();
+
+        String sql = "SELECT DISTINCT t.team_id, t.team_name " +
+                "FROM Matches m " +
+                "JOIN Teams t ON (t.team_id = m.team1_id OR t.team_id = m.team2_id) " +
+                "WHERE m.Host_Id = (SELECT user_id FROM Users WHERE email = ?)";
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, email);
+
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Team teamFromDb = new Team(rs.getString("team_name"), rs.getInt("team_id"));
+            teams.add(teamFromDb);
+        }
+
+        rs.close();
         ps.close();
+        return teams;
     }
 
+    public static ArrayList<Match> getSchedule(String email,ArrayList<Team> Teams) throws SQLException {
+        Connection con = getCon();
+        ArrayList<Match> Schedule = new ArrayList<>();
 
+        String sql = "SELECT m.match_id, m.team1_id, m.team2_id " +
+                "FROM Matches m " +
+                "WHERE m.Host_Id = (SELECT user_id FROM Users WHERE email = ?) " +
+                "ORDER BY m.Match_Number";
+
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, email);
+
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Match match= new Match(getTeamById(Teams,rs.getInt("team1_id")), getTeamById(Teams,rs.getInt("team2_id")), rs.getInt("match_id"));
+            Schedule.add(match);
+        }
+
+        rs.close();
+        ps.close();
+        return Schedule;
+    }
 
     public static void main(String[] args) throws SQLException {
 
