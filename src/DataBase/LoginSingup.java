@@ -5,8 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Scanner;
 import static DataBase.SQLquery.*;
-import static Simulation.Tournament.organizeMatch;
-import static Simulation.Tournament.setScheduleFromDB;
+import static Simulation.Tournament.*;
 
 public class LoginSingup {
     public static void main(String[] args) throws Exception {
@@ -25,7 +24,7 @@ public class LoginSingup {
             System.out.print("Enter Password: ");
             String password = sc.nextLine();
 
-            System.out.print("Enter Role (HOST / AUDIENCE / AUTHOR): ");
+            System.out.print("Enter Role (HOST / AUDIENCE: ");
             String role = sc.nextLine().toUpperCase();
 
             Connection con = getCon();
@@ -84,7 +83,9 @@ public class LoginSingup {
                             break;
 
                         case 2:
-                            setScheduleFromDB(email);
+                            setScheduleFromDB(sc,email);
+                            System.out.println("****************************************");
+                            startMatch(sc,email);
                             break;
                     }
                 }while (choiceForMatch!=3);

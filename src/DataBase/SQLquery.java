@@ -1,10 +1,12 @@
 package DataBase;
 
+import DataStructure.LinkedListOfPlayer;
 import Simulation.Match;
 import Simulation.Team;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 import static Simulation.Team.getTeamById;
@@ -42,15 +44,16 @@ public class SQLquery {
         ps.setString(4, teamName);
         ps.executeUpdate();
     }
-    public static void insertSchedule(int match_id,int team1Id,int team2Id,String emailId,int matchNumber) throws SQLException {
+    public static void insertSchedule(int match_id,int team1Id,int team2Id,String emailId,int matchNumber,int over) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO Matches(match_id ,Host_Id,team1_id,team2_id,Match_Number) VALUES (?,(select user_id from Users where email=?),?,?,?)";
+        String sql = "INSERT INTO Matches(match_id ,Host_Id,team1_id,team2_id,Match_Number,inning_overs) VALUES (?,(select user_id from Users where email=?),?,?,?,?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1, match_id);
         ps.setString(2, emailId);
         ps.setInt(3, team1Id );
         ps.setInt(4, team2Id);
         ps.setInt(5, matchNumber);
+        ps.setInt(6, over);
         ps.executeUpdate();
     }
     public static void insertTournament(String tournament_name,int year,String email) throws SQLException {
@@ -263,13 +266,14 @@ public class SQLquery {
     }
 
     public static ArrayList<Match> getSchedule(String email,ArrayList<Team> Teams) throws SQLException {
+        //tournament.admin@cricket.org
+        //Cricket@2025
         Connection con = getCon();
         ArrayList<Match> Schedule = new ArrayList<>();
 
-        String sql = "SELECT m.match_id, m.team1_id, m.team2_id " +
-                "FROM Matches m " +
-                "WHERE m.Host_Id = (SELECT user_id FROM Users WHERE email = ?) " +
-                "ORDER BY m.Match_Number";
+        String sql = "SELECT M.match_id, M.team1_id, M.team2_id, M.inning_overs " +
+                " FROM Matches M WHERE  M.Host_Id = (SELECT user_id FROM Users WHERE email = ?) " +
+                " ORDER BY M.Match_Number";
 
 
         PreparedStatement ps = con.prepareStatement(sql);
@@ -277,7 +281,8 @@ public class SQLquery {
 
         ResultSet rs = ps.executeQuery();
         while (rs.next()) {
-            Match match= new Match(getTeamById(Teams,rs.getInt("team1_id")), getTeamById(Teams,rs.getInt("team2_id")), rs.getInt("match_id"));
+            Match match= new Match(getTeamById(Teams,rs.getInt(2)), getTeamById(Teams,rs.getInt(3)), rs.getInt(1));
+            match.setInningOvers(rs.getInt(4));
             Schedule.add(match);
         }
 
@@ -285,6 +290,37 @@ public class SQLquery {
         ps.close();
         return Schedule;
     }
+
+    public static LinkedListOfPlayer getPlayersForTeamsInRoleOrder(Team team) throws SQLException {
+        Connection con = getCon();
+        LinkedListOfPlayer allPlayers = new LinkedListOfPlayer();
+
+        String sql = "SELECT player_id, player_name, role " +
+                "FROM Players " +
+                "WHERE team_id = ? " +
+                "ORDER BY FIELD(role, 'BATSMAN', 'ALLROUNDER', 'BOWLER')";
+
+        PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, team.getTeamId());
+            ResultSet rs = ps.executeQuery();
+            String name;
+            int id;
+            while (rs.next()) {
+                name=rs.getString("player_name");
+                id=rs.getInt("player_id");
+
+                if(rs.getString("role").equalsIgnoreCase("BATSMAN"))
+                    allPlayers.addBatsman(name,id);
+                else if (rs.getString("role").equalsIgnoreCase("ALLROUNDER"))
+                    allPlayers.addAllrounder(name,id);
+                else
+                    allPlayers.addBowler(name,id);
+            }
+            rs.close();
+        ps.close();
+        return allPlayers;
+    }
+
 
     public static void main(String[] args) throws SQLException {
 

@@ -4,6 +4,7 @@ public class Match {
     Team team1;
     Team team2;
     int MatchId;
+    int inningOvers;
 
 
     public Match(Team team1, Team team2, int MatchId) {
@@ -11,6 +12,11 @@ public class Match {
         this.team2 = team2;
         this.MatchId=MatchId;
     }
+
+    public void setInningOvers(int inningOvers) {
+        this.inningOvers = inningOvers;
+    }
+
 
     @Override
     public String toString() {

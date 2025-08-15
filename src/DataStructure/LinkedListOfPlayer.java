@@ -28,8 +28,9 @@ public class LinkedListOfPlayer {
 
         protected Player next;
 
-        public  Player(String name) {
+        public  Player(String name,int playerId) {
             this.playerName = name;
+            this.playerId=playerId;
             this.onStrike = true;
             this.isOut = false;
             this.isPlaying=false;
@@ -135,8 +136,8 @@ public class LinkedListOfPlayer {
 
     // Batsman specialization (primarily a batter)
     public static class Batsman extends Player {
-        public Batsman(String name) {
-            super(name);
+        public Batsman(String name,int playerId) {
+            super(name,playerId);
         }
         public Batsman(Batsman copy){
             super(copy);
@@ -160,8 +161,8 @@ public class LinkedListOfPlayer {
             this.wickets=copy.wickets;
             this.runsGiven=copy.runsGiven;
         }
-        public Bowler(String name) {
-            super(name);
+        public Bowler(String name,int playerId) {
+            super(name,playerId);
         }
 
 
@@ -180,8 +181,8 @@ public class LinkedListOfPlayer {
 
     // All-rounder specialization (both batting and bowling)
     public static class AllRounder extends Bowler {
-        public AllRounder(String name) {
-            super(name);
+        public AllRounder(String name,int playerId) {
+            super(name,playerId);
         }
 
         @Override
@@ -201,8 +202,8 @@ public class LinkedListOfPlayer {
     // LinkedList implementation
     private Player head;
 
-    public void addBatsman(String name) {
-        Batsman n = new Batsman(name);
+    public void addBatsman(String name,int playerId) {
+        Batsman n = new Batsman(name,playerId);
         if (head == null) {
             head = n;
         } else {
@@ -214,8 +215,8 @@ public class LinkedListOfPlayer {
         }
     }
 
-    public void addBowler(String name) {
-        Bowler n = new Bowler(name);
+    public void addBowler(String name,int playerId) {
+        Bowler n = new Bowler(name,playerId);
         if (head == null) {
             head = n;
         } else {
@@ -228,8 +229,8 @@ public class LinkedListOfPlayer {
 
     }
 
-    public void addAllrounder(String name) {
-        AllRounder n = new AllRounder(name);
+    public void addAllrounder(String name,int playerId) {
+        AllRounder n = new AllRounder(name,playerId);
         if (head == null) {
             head = n;
         } else {
