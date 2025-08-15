@@ -83,7 +83,7 @@ public class LoginSingup {
                             break;
 
                         case 2:
-                            setScheduleFromDB(sc,email);
+                            setScheduleFromDB(email);
                             startMatch(sc,email);
                             break;
                     }

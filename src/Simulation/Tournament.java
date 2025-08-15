@@ -211,7 +211,7 @@ public class Tournament {
 
     }
 
-    public static void setScheduleFromDB(Scanner sc,String email) throws SQLException, InterruptedException {
+    public static void setScheduleFromDB(String email) throws SQLException, InterruptedException {
         Teams.addAll(getTeamData(email));
         System.out.println(Teams);
         Schedule.addAll(getSchedule(email,Teams));

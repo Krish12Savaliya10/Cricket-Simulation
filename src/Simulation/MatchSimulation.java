@@ -112,42 +112,57 @@ public class MatchSimulation {
         }
     }
 
-    public static void displayScorecard(int i, int j, Team BattingTeam, LinkedListOfPlayer.Player Batsman1,
-                                        LinkedListOfPlayer.Player Batsman2, LinkedListOfPlayer.Player Bowler,
+    public static void displayScorecard(int i, int j, Team BattingTeam,
+                                        LinkedListOfPlayer.Player Batsman1,
+                                        LinkedListOfPlayer.Player Batsman2,
+                                        LinkedListOfPlayer.Bowler Bowler,
                                         int Target, int inning) {
-        System.out.println("-----------------");
-        System.out.println(BattingTeam.teamName + (BattingTeam.freeHitActive ? " [FREE HIT]" : ""));
 
-        System.out.print("(" + BattingTeam.totalRun + "/" + BattingTeam.wicketDown + ")          OVER: (" + i + "." + j + ")");
-        if ((inning == 2))
-            System.out.println("     Target " + Target);
-        else
-            System.out.println();
+        System.out.println("-----------------");
+        String teamLine = BattingTeam.teamName + (BattingTeam.freeHitActive ? " [FREE HIT]" : "");
+        System.out.println(teamLine + " ".repeat(Math.max(0, 25 - teamLine.length())));
+
+        String scorePart = "(" + BattingTeam.totalRun + "/" + BattingTeam.wicketDown + ")";
+        String overPart = "OVER: (" + i + "." + j + ")";
+        String targetPart = (inning == 2) ? "Target " + Target : "";
+
+        System.out.println(scorePart + " ".repeat(Math.max(0, 15 - scorePart.length())) +
+                        overPart + " ".repeat(Math.max(0, 15 - overPart.length())) +
+                        targetPart);
 
         double crr = (i == 0 && j == 0) ? 0.0 :
                 (BattingTeam.totalRun * 6.0) / (i * 6 + j);
         System.out.println("CRR: " + String.format("%.2f", crr));
 
-        System.out.println();
-        System.out.println("Batter");
-        printBatsman(Batsman1, Batsman1.isOnStrike());
-        printBatsman(Batsman2, Batsman2.isOnStrike());
 
         System.out.println();
-        System.out.println("Bowler");
-        System.out.println(Bowler.getPlayerName() + "          " +
-                LinkedListOfPlayer.Player.getWickets() + "-" + LinkedListOfPlayer.Player.getRunsGiven() +
-                " (" + Bowler.getOversBowled() + "." + j + ")");
+        System.out.println("Batter             R     B     4s     6s");
+        printBatsmanWithSpacing(Batsman1);
+        printBatsmanWithSpacing(Batsman2);
+
+
+        System.out.println();
+        System.out.println("Bowler             O     R     W");
+        String bowlerName = Bowler.getPlayerName();
+        System.out.println(
+                bowlerName + " ".repeat(Math.max(0, 18 - bowlerName.length())) +
+                        Bowler.getOversBowled() + " ".repeat(6 - String.valueOf(Bowler.getOversBowled()).length()) +
+                        LinkedListOfPlayer.Bowler.getRunsGiven() + " ".repeat(7 - String.valueOf(LinkedListOfPlayer.Bowler.getRunsGiven()).length()) +
+                        LinkedListOfPlayer.Bowler.getWickets());
+
         System.out.println("-----------------\n");
     }
 
-    private static void printBatsman(LinkedListOfPlayer.Player batsman, boolean onStrike) {
-        System.out.println(batsman.getPlayerName() +
-                (onStrike ? "*" : " ") + "         " +
-                batsman.getRunsScored() + "(" + batsman.getBallsFaced() +
-                ")     4's(" + batsman.getFours() + ")" +
-                "   6's(" + batsman.getSixes() + ")");
+    private static void printBatsmanWithSpacing(LinkedListOfPlayer.Player batsman) {
+        String name = batsman.getPlayerName() + (batsman.isOnStrike() ? "*" : "");
+        System.out.println(
+                name + " ".repeat(Math.max(0, 18 - name.length())) +
+                        batsman.getRunsScored() + " ".repeat(6 - String.valueOf(batsman.getRunsScored()).length()) +
+                        batsman.getBallsFaced() + " ".repeat(6 - String.valueOf(batsman.getBallsFaced()).length()) +
+                        batsman.getFours() + " ".repeat(7 - String.valueOf(batsman.getFours()).length()) +
+                        batsman.getSixes());
     }
+
 
     public static void StrickRotete(LinkedListOfPlayer.Player Batsman1, LinkedListOfPlayer.Player Batsman2) {
         boolean temp = Batsman1.isOnStrike();
@@ -161,7 +176,7 @@ public class MatchSimulation {
         System.out.println(msg);
         batsman.setRunsScored(batsman.getRunsScored() + run);
         batsman.setBallsFaced(batsman.getBallsFaced() + 1);
-        bowler.setRunsGiven(LinkedListOfPlayer.Player.getRunsGiven() + run);
+        bowler.setRunsGiven(LinkedListOfPlayer.Bowler.getRunsGiven() + run);
         battingTeam.totalRun += run;
         overStack.push("" + run);
         if (run == 4)
@@ -180,7 +195,7 @@ public class MatchSimulation {
         System.out.println("No ball! Free hit awarded for next ball!");
         battingTeam.freeHitActive = true;
        // battingTeam.totalRun += 1;
-        bowler.setRunsGiven(LinkedListOfPlayer.Player.getRunsGiven() + 1);
+        bowler.setRunsGiven(LinkedListOfPlayer.Bowler.getRunsGiven() + 1);
 
         System.out.println("Enter e/E if Extra runs and Enter o/O if Runout in Noball else press [ENTER]:");
         String inNoball = sc.nextLine();
@@ -214,7 +229,7 @@ public class MatchSimulation {
             overStack.push("W");
         }
         battingTeam.totalRun += 1;
-        bowler.setRunsGiven(LinkedListOfPlayer.Player.getRunsGiven() + 1);
+        bowler.setRunsGiven(LinkedListOfPlayer.Bowler.getRunsGiven() + 1);
         return extra+1;
     }
 
@@ -261,7 +276,7 @@ public class MatchSimulation {
         updateBallByBallWicket(matchID,outPlayer.getPlayerId(),inning,over,ball,0);
 
         overStack.push("O");
-        bowler.setWickets(LinkedListOfPlayer.Player.getWickets() + 1);
+        bowler.setWickets(LinkedListOfPlayer.Bowler.getWickets() + 1);
 
         if (battingTeam.wicketDown == totalPlayers - 1)
             return true;
@@ -303,7 +318,7 @@ public class MatchSimulation {
 
         team.totalRun += runs;
         striker.setRunsScored(striker.getRunsScored() + runs);
-        bowler.setRunsGiven(LinkedListOfPlayer.Player.getRunsGiven() + runs);
+        bowler.setRunsGiven(LinkedListOfPlayer.Bowler.getRunsGiven() + runs);
 
         System.out.println("Who got run out? [1 for Striker / 2 for Non-Striker]");
         int whoRunOut = getValidChoice(sc, "Choose 1 or 2:", 1, 2);
@@ -498,7 +513,7 @@ public class MatchSimulation {
                 updateBattingStats(matchId,Batsman1.getPlayerId(),Batsman1.getRunsScored(),Batsman1.getBallsFaced(), Batsman1.getFours(), Batsman1.getSixes());
                 updateBattingStats(matchId,Batsman2.getPlayerId(),Batsman2.getRunsScored(),Batsman2.getBallsFaced(), Batsman2.getFours(), Batsman2.getSixes());
                 updateTeamBattingStats(matchId,BattingTeam.teamId,BattingTeam.totalRun,BattingTeam.wicketDown,Double.parseDouble(i+"."+((j==-1)?0:j)));
-                updateBowlingStats(matchId,Bowler.getPlayerId(), LinkedListOfPlayer.Player.getWickets(),Double.parseDouble(i+"."+j),LinkedListOfPlayer.Bowler.getRunsGiven());
+                updateBowlingStats(matchId,Bowler.getPlayerId(), LinkedListOfPlayer.Bowler.getWickets(),Double.parseDouble(i+"."+j), LinkedListOfPlayer.Bowler.getRunsGiven());
 
                 if(j==5){
                     System.out.println("Enter u/U for change last ball input else press [ENTER]");
@@ -529,7 +544,7 @@ public class MatchSimulation {
         updateBattingStats(matchId,Batsman1.getPlayerId(),Batsman1.getRunsScored(),Batsman1.getBallsFaced(), Batsman1.getFours(), Batsman1.getSixes());
         updateBattingStats(matchId,Batsman2.getPlayerId(),Batsman2.getRunsScored(),Batsman2.getBallsFaced(), Batsman2.getFours(), Batsman2.getSixes());
         updateTeamBattingStats(matchId,BattingTeam.teamId,BattingTeam.totalRun,BattingTeam.wicketDown,Double.parseDouble(i+"."+j));
-
+        updateBowlingStats(matchId,Bowler.getPlayerId(), LinkedListOfPlayer.Bowler.getWickets(),Double.parseDouble(i+"."+j), LinkedListOfPlayer.Bowler.getRunsGiven());
         if (inning == 1) {
             System.out.println("Inning 1 completed.");
             team1.Target = team1.totalRun + 1;
@@ -609,7 +624,7 @@ public class MatchSimulation {
     private static void handleNoBall(Team team, LinkedListOfPlayer.Player batsman, LinkedListOfPlayer.Bowler bowler, int runs) {
         team.totalRun += (1 + runs);
         batsman.setRunsScored(batsman.getRunsScored() + runs);
-        bowler.setRunsGiven(LinkedListOfPlayer.Player.getRunsGiven() +1 + runs);
+        bowler.setRunsGiven(LinkedListOfPlayer.Bowler.getRunsGiven() +1 + runs);
 
         if (runs == 6) {
             batsman.setSixes(batsman.getSixes() + 1);
@@ -626,7 +641,7 @@ public class MatchSimulation {
         System.out.println("Enter runs scored ball (0-4)");
         int runs = getValidChoice(sc, "Extras", 0, 4);
         team.totalRun += runs;
-        bowler.setRunsGiven(LinkedListOfPlayer.Player.getRunsGiven() + runs);
+        bowler.setRunsGiven(LinkedListOfPlayer.Bowler.getRunsGiven() + runs);
 
         if (runs % 2 == 1) {
             StrickRotete(batsman, (batsman == Batsman1 ? Batsman2 : Batsman1));

@@ -141,9 +141,6 @@ public class LinkedListOfPlayer {
         public Batsman(String name,int playerId) {
             super(name,playerId);
         }
-        public Batsman(Batsman copy){
-            super(copy);
-        }
 
         @Override
         public void displayStats() {
@@ -159,14 +156,10 @@ public class LinkedListOfPlayer {
     public static class Bowler extends Player {
         public Bowler(Bowler copy){
             super(copy);
-            this.oversBowled=copy.oversBowled;
-            this.wickets=copy.wickets;
-            this.runsGiven=copy.runsGiven;
         }
         public Bowler(String name,int playerId) {
             super(name,playerId);
         }
-
 
         @Override
         public void displayStats() {
