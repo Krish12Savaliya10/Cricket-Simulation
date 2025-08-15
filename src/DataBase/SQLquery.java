@@ -148,6 +148,24 @@ public class SQLquery {
         pst.setInt(6, playerId);
         pst.executeUpdate();
 }
+
+    public static void updateBowlingStats(int matchId, int playerId, int wickets, double over, int runs_conceded) throws SQLException{
+        Connection con = getCon();
+        String sql = "UPDATE PlayerMatchStats SET "
+                + "wickets = ?,overs_bowled = ?, "
+                + "runs_conceded = ? "
+                + "WHERE match_id = ? AND player_id = ?";
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setInt(1, wickets);
+        pst.setDouble(3, over);
+        pst.setInt(3, runs_conceded);
+        pst.setInt(5, matchId);
+        pst.setInt(6, playerId);
+
+        pst.executeUpdate();
+    }
+
+
     public static void updateTeamBattingStats(int matchId, int teamId, int runs, int wicket, double overPlayed) throws SQLException{
         Connection con = getCon();
         String sql = "UPDATE TeamMatchStats SET "
@@ -272,7 +290,7 @@ public class SQLquery {
         ArrayList<Match> Schedule = new ArrayList<>();
 
         String sql = "SELECT M.match_id, M.team1_id, M.team2_id, M.inning_overs " +
-                " FROM Matches M WHERE  M.Host_Id = (SELECT user_id FROM Users WHERE email = ?) " +
+                " FROM Matches M WHERE  M.Host_Id = (SELECT user_id FROM Users WHERE email = ? AND match_status <> 'COMPLETED')" +
                 " ORDER BY M.Match_Number";
 
 
@@ -320,6 +338,139 @@ public class SQLquery {
         ps.close();
         return allPlayers;
     }
+
+    public static void displayScorecardFromDB(int matchId) throws SQLException {
+        Connection con = getCon();
+
+        int inning = getCurrentInningFromDB(con, matchId);
+
+        // 1️⃣ Get team info, total runs, wickets, overs
+        String teamSql = """
+        SELECT t.team_name, tm.runs_scored, tm.wickets_lost, tm.overs_played
+        FROM TeamMatchStats tm
+        JOIN Teams t ON tm.team_id = t.team_id
+        WHERE tm.match_id = ? 
+        ORDER BY tm.team_id
+        LIMIT 1 OFFSET ?  -- 0 for 1st inning, 1 for 2nd inning
+    """;
+        PreparedStatement teamPs = con.prepareStatement(teamSql);
+        teamPs.setInt(1, matchId);
+        teamPs.setInt(2, inning - 1);
+        ResultSet teamRs = teamPs.executeQuery();
+
+        if (!teamRs.next()) {
+            System.out.println("No data found for match " + matchId + " inning " + inning);
+            return;
+        }
+
+        String teamName = teamRs.getString("team_name");
+        int totalRun = teamRs.getInt("runs_scored");
+        int wickets = teamRs.getInt("wickets_lost");
+        double oversPlayed = teamRs.getDouble("overs_played");
+
+        int i = (int) oversPlayed;
+        int j = (int) Math.round((oversPlayed - i) * 10);
+
+        // Header
+        System.out.println("-----------------");
+        System.out.println(teamName);
+        System.out.print("(" + totalRun + "/" + wickets + ")          OVER: (" + i + "." + j + ")");
+        if (inning == 2) {
+            int target = getTargetFromDB(con, matchId);
+            System.out.println("     Target " + target);
+        } else {
+            System.out.println();
+        }
+
+        double crr = (i == 0 && j == 0) ? 0.0 : (totalRun * 6.0) / (i * 6 + j);
+        System.out.println("CRR: " + String.format("%.2f", crr));
+
+        // Batting
+        System.out.println();
+        System.out.println("Batter");
+        String batsmanSql = """
+        SELECT p.player_name, s.runs_scored, s.balls_faced
+        FROM PlayerMatchStats s
+        JOIN Players p ON s.player_id = p.player_id
+        JOIN Teams t ON p.team_id = t.team_id
+        WHERE s.match_id = ? AND t.team_name = ?
+        AND s.BattingStats != 'DNB'
+        ORDER BY s.BattingStats = 'PLAYING' DESC
+        LIMIT 2
+    """;
+        PreparedStatement batPs = con.prepareStatement(batsmanSql);
+        batPs.setInt(1, matchId);
+        batPs.setString(2, teamName);
+        ResultSet batRs = batPs.executeQuery();
+        while (batRs.next()) {
+            System.out.println(batRs.getString("player_name") + " " + batRs.getInt("runs_scored") + " (" + batRs.getInt("balls_faced") + ")");
+        }
+
+        // Bowler
+        System.out.println();
+        System.out.println("Bowler");
+        String bowlerSql = """
+        SELECT p.player_name, s.wickets, s.runs_conceded, s.overs_bowled
+        FROM PlayerMatchStats s
+        JOIN Players p ON s.player_id = p.player_id
+        WHERE s.match_id = ? AND s.overs_bowled > 0
+        ORDER BY s.overs_bowled DESC
+        LIMIT 1
+    """;
+        PreparedStatement bowlPs = con.prepareStatement(bowlerSql);
+        bowlPs.setInt(1, matchId);
+        ResultSet bowlRs = bowlPs.executeQuery();
+        if (bowlRs.next()) {
+            double bowlerOvers = bowlRs.getDouble("overs_bowled");
+            int bo = (int) bowlerOvers;
+            int bj = (int) Math.round((bowlerOvers - bo) * 10);
+
+            System.out.println(bowlRs.getString("player_name") + "          " +
+                    bowlRs.getInt("wickets") + "-" + bowlRs.getInt("runs_conceded") +
+                    " (" + bo + "." + bj + ")");
+        }
+
+        System.out.println("-----------------\n");
+
+        // Close
+        bowlRs.close(); bowlPs.close();
+        batRs.close(); batPs.close();
+        teamRs.close(); teamPs.close();
+        con.close();
+    }
+
+    // Get current inning number from ball_by_ball
+    private static int getCurrentInningFromDB(Connection con, int matchId) throws SQLException {
+        String sql = "SELECT MAX(innings) FROM ball_by_ball WHERE match_id = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, matchId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int inning = rs.getInt(1);
+                return inning == 0 ? 1 : inning; // Default to 1 if no data
+            }
+        }
+        return 1;
+    }
+
+    private static int getTargetFromDB(Connection con, int matchId) throws SQLException {
+        String sql = """
+        SELECT runs_scored
+        FROM TeamMatchStats
+        WHERE match_id = ?
+        ORDER BY team_id
+        LIMIT 1
+    """;
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, matchId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("runs_scored") + 1;
+            }
+        }
+        return 0;
+    }
+
 
 
     public static void main(String[] args) throws SQLException {

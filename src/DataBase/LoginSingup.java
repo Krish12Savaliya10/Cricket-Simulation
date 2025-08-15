@@ -84,14 +84,13 @@ public class LoginSingup {
 
                         case 2:
                             setScheduleFromDB(sc,email);
-                            System.out.println("****************************************");
                             startMatch(sc,email);
                             break;
                     }
                 }while (choiceForMatch!=3);
             }
             else if(role.equalsIgnoreCase("AUDIENCE")){
-
+                    displayScorecardFromDB(5001);
             }
             else
                 System.out.println("after database");

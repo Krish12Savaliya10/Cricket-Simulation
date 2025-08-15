@@ -5,6 +5,7 @@ public class Match {
     Team team2;
     int MatchId;
     int inningOvers;
+    String matchStatus;
 
 
     public Match(Team team1, Team team2, int MatchId) {
@@ -17,6 +18,13 @@ public class Match {
         this.inningOvers = inningOvers;
     }
 
+    public String getMatchStatus() {
+        return matchStatus;
+    }
+
+    public void setMatchStatus(String matchStatus) {
+        this.matchStatus = matchStatus;
+    }
 
     @Override
     public String toString() {

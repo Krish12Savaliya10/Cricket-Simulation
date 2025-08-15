@@ -22,8 +22,8 @@ public class LinkedListOfPlayer {
 
         // Bowling-specific stats
         protected int oversBowled;
-        protected int wickets;
-        protected int runsGiven;
+        protected static int wickets;
+        protected static int runsGiven;
 
 
         protected Player next;
@@ -108,13 +108,15 @@ public class LinkedListOfPlayer {
 
         public void setOversBowled(int oversBowled) {this.oversBowled = oversBowled;}
 
-        public int getWickets() {return wickets;}
+        public static int getWickets() {return wickets;}
 
-        public void setWickets(int wickets) {this.wickets = wickets;}
+        public void setWickets(int wickets) {
+            Player.wickets = wickets;}
 
-        public int getRunsGiven() {return runsGiven;}
+        public static int getRunsGiven() {return runsGiven;}
 
-        public void setRunsGiven(int runsGiven) {this.runsGiven = runsGiven;}
+        public void setRunsGiven(int runsGiven) {
+            Player.runsGiven = runsGiven;}
         public boolean isPlaying() {return isPlaying;}
 
         public void setPlaying(boolean playing) {

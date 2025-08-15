@@ -162,58 +162,60 @@ public class Tournament {
         for(Match match:Schedule){
             match.inningOvers=over;
             insertSchedule(match.MatchId, match.team1.teamId, match.team2.teamId, email,matchNumber,over);
+            match.setMatchStatus("UPCOMING");
             matchNumber++;
         }
 
     }
 
     public static void startMatch(Scanner sc, String email) throws SQLException, InterruptedException {
-        int i=1;
+        int i = 1;
         int playerCount = 0;
-        do{
-            Match match=Schedule.removeFirst();
-            Team team1=match.team1;
-            Team team2=match.team2;
-            if(choice!=1){
-                insertTeamMatchStats(match.MatchId, team1.teamId, year, TournamentName,email);
-                insertTeamMatchStats(match.MatchId, team2.teamId, year, TournamentName,email);
-            }
-            else{
-                insertTeamMatchStats(match.MatchId, team1.teamId,year, "Series",email);
-                insertTeamMatchStats(match.MatchId, team2.teamId,year, "Series",email);
-            }
-            team1.matchPlayed++;
-            team2.matchPlayed++;
-            LinkedListOfPlayer team1Player=TeamSet.get(team1);
-            LinkedListOfPlayer team2Player=TeamSet.get(team2);
-            for ( LinkedListOfPlayer.Player player:team1Player.getALlPlayer()) {
-                insertPlayerMatchStats(match.MatchId,player.getPlayerId());
-                playerCount++;
-            }
-            for ( LinkedListOfPlayer.Player player:team2Player.getALlPlayer()) {
-                insertPlayerMatchStats(match.MatchId,player.getPlayerId());
-            }
-            if(team1.matchPlayed>0) {
-                team1.setDefault(team1);
-                team1Player.setDefault();
-            }
-            if(team2.matchPlayed>0){
-                team2.setDefault(team2);
-                team2Player.setDefault();
-            }
-            System.out.println("--------match "+(i++)+"---------");
+        do {
+            Match match = Schedule.removeFirst();
+            if (!match.getMatchStatus().equalsIgnoreCase("COMPLETED")) {
+                Team team1 = match.team1;
+                Team team2 = match.team2;
+                if (choice != 1) {
+                    insertTeamMatchStats(match.MatchId, team1.teamId, year, TournamentName, email);
+                    insertTeamMatchStats(match.MatchId, team2.teamId, year, TournamentName, email);
+                } else {
+                    insertTeamMatchStats(match.MatchId, team1.teamId, year, "Series", email);
+                    insertTeamMatchStats(match.MatchId, team2.teamId, year, "Series", email);
+                }
+                match.setMatchStatus("LIVE");
+                team1.matchPlayed++;
+                team2.matchPlayed++;
+                LinkedListOfPlayer team1Player = TeamSet.get(team1);
+                LinkedListOfPlayer team2Player = TeamSet.get(team2);
+                for (LinkedListOfPlayer.Player player : team1Player.getALlPlayer()) {
+                    insertPlayerMatchStats(match.MatchId, player.getPlayerId());
+                    playerCount++;
+                }
+                for (LinkedListOfPlayer.Player player : team2Player.getALlPlayer()) {
+                    insertPlayerMatchStats(match.MatchId, player.getPlayerId());
+                }
+                if (team1.matchPlayed > 0) {
+                    team1.setDefault(team1);
+                    team1Player.setDefault();
+                }
+                if (team2.matchPlayed > 0) {
+                    team2.setDefault(team2);
+                    team2Player.setDefault();
+                }
+                System.out.println("--------match " + (i++) + "---------");
 
-            Simulation(sc,team1,team2,team1Player,team2Player, match.inningOvers,playerCount,match.MatchId);
-        } while(!Schedule.isEmpty());
+                Simulation(sc, team1, team2, team1Player, team2Player, match.inningOvers, playerCount, match);
+            }
+        } while (!Schedule.isEmpty());
+
     }
 
     public static void setScheduleFromDB(Scanner sc,String email) throws SQLException, InterruptedException {
         Teams.addAll(getTeamData(email));
         System.out.println(Teams);
-        System.out.println("@@@@@@@@@@@@@@@@@");
         Schedule.addAll(getSchedule(email,Teams));
         printSchedule();
-        System.out.println("#####################");
         for (Team team:Teams) {
             TeamSet.put(team,getPlayersForTeamsInRoleOrder(team));
             TeamSet.get(team).displayPlayerName();
