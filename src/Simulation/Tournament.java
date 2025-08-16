@@ -23,7 +23,7 @@ public class Tournament {
     static String TournamentName = "";
     static int over ;
 
-    public static void organizeMatch(String email) throws InterruptedException, SQLException {
+    public static void organizeMatch(String email) throws  SQLException {
        Connection con=getCon();
        con.setAutoCommit(false);
         Scanner sc = new Scanner(System.in);
@@ -38,7 +38,7 @@ public class Tournament {
 
         switch (choice) {
             case 1 :
-                TwoTeamsMatches(sc, 1,(playerCount));
+                TwoTeamsMatches(sc, 1,(playerCount),email);
                 printSchedule();
                 System.out.println("Enter number of over(2 to 50)");
                 over=getValidChoice(sc,"",2,50);
@@ -51,7 +51,7 @@ public class Tournament {
                 insertTournament(TournamentName,year,email);
                 System.out.print("Enter number of matches (2 to 5): ");
                 int n = getValidChoice(sc,"",2,5);
-                TwoTeamsMatches(sc, n,playerCount);
+                TwoTeamsMatches(sc, n , playerCount, email);
                 printSchedule();
                 System.out.println("Enter number of over(2 to 50)");
                 over=getValidChoice(sc,"",2,50);
@@ -73,7 +73,7 @@ public class Tournament {
                     System.out.print("Enter team " + (i) + " name: ");
                     teamName=sc.nextLine().toUpperCase();
                     addTeam=new Team(teamName,(int)((Math.random()*89999)+100000));
-                    insertTeam(addTeam.teamId,teamName);
+                    insertTeam(addTeam.teamId,teamName,email);
                     insertIntoPointsTable(TournamentName,year,addTeam.teamId);
                     Teams.add(addTeam);
                     TeamSet.put(addTeam,new LinkedListOfPlayer());
@@ -96,8 +96,8 @@ public class Tournament {
                     System.out.println("Group 1: " + Group1);
                     System.out.println("Group 2: " + Group2);
                     System.out.println("Choose Schedule Type:");
-                    System.out.println("1. Same Group Matches Only " + (Group1.size()*(Group1.size()-1)) + " Matches"); // 20
-                    System.out.println("2. Other Group Matches Only " + (Group1.size()*Group1.size()) + " Matches"); // 25
+                    System.out.println("1. Same Group Matches Only " + (Group1.size()*(Group1.size()-1)) + " Matches");
+                    System.out.println("2. Other Group Matches Only " + (Group1.size()*Group1.size()) + " Matches");
                     System.out.println("3. 1 match with group and 2 match with other group " + (Group1.size()*(Group1.size()-1) + 2*(Group1.size()*Group1.size())) + " Matches"); // 60
                     System.out.println("4. 2 match with group and 1 match with other group " + (2*(Group1.size()*(Group1.size()-1)) + (Group1.size()*Group1.size())) + " Matches"); // 45
                     System.out.println("5. Play with all other teams twice " + (2*( (Group1.size()*(Group1.size()-1)) + (Group1.size()*Group1.size()) )) + " Matches"); // 70
@@ -138,6 +138,9 @@ public class Tournament {
                             System.out.println("Invalid option selected");
                             break;
                     }
+                    for(Match m:Schedule){
+                        m.setMatchType("TOURNAMENT");
+                    }
                     printSchedule();
                 }
 
@@ -161,7 +164,7 @@ public class Tournament {
         int matchNumber=1;
         for(Match match:Schedule){
             match.inningOvers=over;
-            insertSchedule(match.MatchId, match.team1.teamId, match.team2.teamId, email,matchNumber,over);
+            insertSchedule(match.MatchId, match.team1.teamId, match.team2.teamId, email, matchNumber,over,match.matchType);
             match.setMatchStatus("UPCOMING");
             matchNumber++;
         }
@@ -222,15 +225,15 @@ public class Tournament {
         }
     }
 
-    static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer) throws SQLException {
+    static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer,String email) throws SQLException {
         System.out.print("Enter Team 1 name: ");
         String team1name=sc.nextLine();
         Team team1 = new Team(team1name,(int)((Math.random()*89999)+100000));
-        insertTeam(team1.teamId,team1name);
+        insertTeam(team1.teamId,team1name,email);
         System.out.print("Enter Team 2 name: ");
         String team2name=sc.nextLine();
         Team team2 = new Team(team2name,(int)((Math.random()*89999)+100000));
-        insertTeam(team2.teamId,team2name);
+        insertTeam(team2.teamId,team2name,email);
         TeamSet.put(team1,new LinkedListOfPlayer());
         inputPlayers(sc,TeamSet.get(team1),team1name,numberOfPlayer);
         TeamSet.put(team2,new LinkedListOfPlayer());
@@ -239,6 +242,13 @@ public class Tournament {
 
         for (int i = 1; i <=matches; i++) {
             Schedule.add(new Match(team1, team2,(int)((Math.random()*89999)+100000)));
+        }
+        if(matches==1)
+            Schedule.getFirst().setMatchType("SINGLE");
+        else {
+            for (Match m:Schedule){
+                m.setMatchType("SERIES");
+            }
         }
     }
     static void Shuffle(){

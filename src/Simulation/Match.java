@@ -6,6 +6,7 @@ public class Match {
     int MatchId;
     int inningOvers;
     String matchStatus;
+    String matchType;
 
 
     public Match(Team team1, Team team2, int MatchId) {
@@ -24,6 +25,14 @@ public class Match {
 
     public void setMatchStatus(String matchStatus) {
         this.matchStatus = matchStatus;
+    }
+
+    public String getMatchType() {
+        return matchType;
+    }
+
+    public void setMatchType(String matchType) {
+        this.matchType = matchType;
     }
 
     @Override

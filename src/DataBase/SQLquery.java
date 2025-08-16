@@ -24,12 +24,13 @@ public class SQLquery {
 
 
     //insert team: INSERT INTO Users (team_name) VALUES (name)
-    public static void insertTeam(int teamId,String name) throws SQLException {
+    public static void insertTeam(int teamId, String name, String email) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO Teams (team_id,team_name) VALUES (?,?)";
+        String sql = "INSERT INTO Teams (team_id,team_name,Host_id) VALUES (?,?,(select user_id from Users where email=?))";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1,teamId);
         ps.setString(2,name);
+        ps.setString(2,email);
         ps.executeUpdate();
     }
 
@@ -43,9 +44,9 @@ public class SQLquery {
         ps.setString(4, teamName);
         ps.executeUpdate();
     }
-    public static void insertSchedule(int match_id,int team1Id,int team2Id,String emailId,int matchNumber,int over) throws SQLException {
+    public static void insertSchedule(int match_id,int team1Id,int team2Id,String emailId,int matchNumber,int over, String matchType) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO Matches(match_id ,Host_Id,team1_id,team2_id,Match_Number,inning_overs) VALUES (?,(select user_id from Users where email=?),?,?,?,?)";
+        String sql = "INSERT INTO Matches(match_id ,Host_Id,team1_id,team2_id,Match_Number,inning_overs, match_type) VALUES (?,(select user_id from Users where email=?),?,?,?,?,?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1, match_id);
         ps.setString(2, emailId);
@@ -53,8 +54,10 @@ public class SQLquery {
         ps.setInt(4, team2Id);
         ps.setInt(5, matchNumber);
         ps.setInt(6, over);
+        ps.setString(7,matchType);
         ps.executeUpdate();
     }
+
     public static void insertTournament(String tournament_name,int year,String email) throws SQLException {
         Connection con = getCon();
         String sql = "INSERT INTO Tournaments(tournament_name ,year,host_id) VALUES (?,?,(select user_id from Users where email=?))";
@@ -424,7 +427,6 @@ public class SQLquery {
         System.out.println("-----------------");
     }
 
-    // Get inning
     private static int getCurrentInningFromDB(Connection con, int matchId) throws SQLException {
         String sql = "SELECT MAX(innings) FROM ball_by_ball WHERE match_id = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
