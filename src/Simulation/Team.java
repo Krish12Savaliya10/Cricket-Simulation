@@ -7,7 +7,7 @@ import java.util.ArrayList;
 public class Team {
     public LinkedListOfPlayer players;
     int totalRun;
-    int overPlayed;
+    double overPlayed;
     int wicketDown;
     int Target;
     String teamName;
@@ -83,6 +83,14 @@ public class Team {
     public int getTeamId() {return teamId;}
 
     public void setTeamId(int teamId) {this.teamId = teamId;}
+
+    public double getOverPlayed() {
+        return overPlayed;
+    }
+
+    public void setOverPlayed(double overPlayed) {
+        this.overPlayed = overPlayed;
+    }
 
     public static Team getTeamById(ArrayList<Team> teams, int teamId) {
         for (Team team : teams) {

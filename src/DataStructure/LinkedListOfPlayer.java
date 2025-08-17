@@ -6,7 +6,7 @@ public class LinkedListOfPlayer {
 
 
     // Base Player class with common batting fields
-    public  static class Player{
+    public static   class Player{
         protected String playerName;
         protected int playerId;
         protected boolean onStrike;
@@ -22,8 +22,8 @@ public class LinkedListOfPlayer {
 
         // Bowling-specific stats
         protected int oversBowled;
-        protected static int wickets;
-        protected static int runsGiven;
+        protected int wickets;
+        protected int runsGiven;
 
 
         protected Player next;
@@ -106,18 +106,18 @@ public class LinkedListOfPlayer {
 
         public int getOversBowled() {return oversBowled;}
 
-        public void setOversBowled(int oversBowled) {this.oversBowled = oversBowled;}
+        public void setOversBowled(int oversBowled) {
+            this.oversBowled = oversBowled;}
 
-        public static int getWickets() {return wickets;}
+        public  int getWickets() {return wickets;}
 
         public void setWickets(int wickets) {
-            Player.wickets = wickets;}
+            this.wickets = wickets;}
 
-        public static int getRunsGiven() {return runsGiven;}
+        public  int getRunsGiven() {return runsGiven;}
 
         public void setRunsGiven(int runsGiven) {
-            Player.runsGiven = runsGiven;}
-        public boolean isPlaying() {return isPlaying;}
+            this.runsGiven = runsGiven;}
 
         public void setPlaying(boolean playing) {
             isPlaying = playing;
@@ -131,25 +131,14 @@ public class LinkedListOfPlayer {
             this.playerId = playerId;
         }
 
-        public  void displayStats(){}
-
-
     }
 
     // Batsman specialization (primarily a batter)
-    public static class Batsman extends Player {
+   public static class Batsman extends Player {
         public Batsman(String name,int playerId) {
             super(name,playerId);
         }
 
-        @Override
-        public void displayStats() {
-            System.out.println("Batsman: " + playerName);
-            System.out.println("Runs: " + runsScored + " Balls: " + ballsFaced);
-            System.out.println("4s: " + fours + " 6s: " + sixes);
-            System.out.println("Strike Rate: " +
-                    (ballsFaced > 0 ? String.format("%.2f", (runsScored * 100.0) / ballsFaced) : "N/A"));
-        }
     }
 
     // Bowler specialization (can bat too)
@@ -161,37 +150,14 @@ public class LinkedListOfPlayer {
             super(name,playerId);
         }
 
-        @Override
-        public void displayStats() {
-            System.out.println("Bowler: " + playerName);
-            // Batting stats
-            System.out.println("[Batting] Runs: " + runsScored + " Balls: " + ballsFaced);
-            // Bowling stats
-            System.out.println("[Bowling] Overs: " + oversBowled);
-            System.out.println("Wickets: " + wickets + " Runs Given: " + runsGiven);
-            System.out.println("Economy: " +
-                    (oversBowled > 0 ? String.format("%.2f", runsGiven / (double) oversBowled) : "N/A"));
-        }
     }
 
     // All-rounder specialization (both batting and bowling)
-    public static class AllRounder extends Bowler {
+    public static  class AllRounder extends Bowler {
         public AllRounder(String name,int playerId) {
             super(name,playerId);
         }
 
-        @Override
-        public void displayStats() {
-            System.out.println("AllRounder: " + playerName);
-            System.out.println("Runs: " + runsScored + " Balls: " + ballsFaced);
-            System.out.println("4s: " + fours + " 6s: " + sixes);
-            System.out.println("Strike Rate: " +
-                    (ballsFaced > 0 ? String.format("%.2f", (runsScored * 100.0) / ballsFaced) : "N/A"));
-            System.out.println("[Bowling] Overs: " + oversBowled);
-            System.out.println("Wickets: " + wickets + " Runs Given: " + runsGiven);
-            System.out.println("Economy: " +
-                    (oversBowled > 0 ? String.format("%.2f", runsGiven / (double) oversBowled) : "N/A"));
-        }
     }
 
     // LinkedList implementation
@@ -270,7 +236,7 @@ public class LinkedListOfPlayer {
                 if(temp instanceof Batsman)
                     System.out.println(" (Batsman)");
                 else {
-                    System.out.println( (temp instanceof AllRounder ? " (All-Rounder)" : " (Bowler)"));;
+                    System.out.println( (temp instanceof AllRounder ? " (All-Rounder)" : " (Bowler)"));
                 }
             }
             temp = temp.next;
@@ -303,17 +269,6 @@ public class LinkedListOfPlayer {
             current.runsGiven=0;
             current=current.next;
         }
-    }
-    public void displayStats(String Name){
-        Player temp = head;
-        while (temp!=null && temp.playerName.equalsIgnoreCase(Name)){
-            temp=temp.next;
-        }
-        if(temp!=null)
-            temp.displayStats();
-        else
-            System.out.println(Name+" not found!");
-
     }
 
 }

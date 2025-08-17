@@ -18,19 +18,13 @@ public class SQLquery {
         return DriverManager.getConnection(url, user, password);
     }
 
-    //Insert user: INSERT INTO Users (full_name, email, password, role) VALUES (?, ?, ?, ?)
-
-    //Login: SELECT * FROM Users WHERE email = ? AND password = ?
-
-
-    //insert team: INSERT INTO Users (team_name) VALUES (name)
     public static void insertTeam(int teamId, String name, String email) throws SQLException {
         Connection con = getCon();
         String sql = "INSERT INTO Teams (team_id,team_name,Host_id) VALUES (?,?,(select user_id from Users where email=?))";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1,teamId);
         ps.setString(2,name);
-        ps.setString(2,email);
+        ps.setString(3,email);
         ps.executeUpdate();
     }
 
@@ -44,9 +38,9 @@ public class SQLquery {
         ps.setString(4, teamName);
         ps.executeUpdate();
     }
-    public static void insertSchedule(int match_id,int team1Id,int team2Id,String emailId,int matchNumber,int over, String matchType) throws SQLException {
+    public static void insertSchedule(int match_id,int team1Id,int team2Id,String emailId,int matchNumber,int over, String matchType, int typeId) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO Matches(match_id ,Host_Id,team1_id,team2_id,Match_Number,inning_overs, match_type) VALUES (?,(select user_id from Users where email=?),?,?,?,?,?)";
+        String sql = "INSERT INTO Matches(match_id ,Host_Id,team1_id,team2_id,Match_Number,inning_overs, match_type, match_type_id) VALUES (?,(select user_id from Users where email=?),?,?,?,?,?,?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setInt(1, match_id);
         ps.setString(2, emailId);
@@ -55,38 +49,39 @@ public class SQLquery {
         ps.setInt(5, matchNumber);
         ps.setInt(6, over);
         ps.setString(7,matchType);
+        ps.setInt(8,typeId);
         ps.executeUpdate();
     }
 
-    public static void insertTournament(String tournament_name,int year,String email) throws SQLException {
+    public static void insertTournament(int tournamentId,String tournament_name,int year,String email) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO Tournaments(tournament_name ,year,host_id) VALUES (?,?,(select user_id from Users where email=?))";
+        String sql = "INSERT INTO Tournaments(tournament_name ,year,host_id, tournament_id) VALUES (?,?,(select user_id from Users where email=?),?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, tournament_name);
         ps.setInt(2, year );
         ps.setString(3, email);
+        ps.setInt(4, tournamentId);
         ps.executeUpdate();
     }
-    public static void insertIntoPointsTable(String tournament_name,int tourYear,int team_id) throws SQLException {
+    public static void insertIntoPointsTable(String tournament_name,int tourYear,int team_id, String groupName) throws SQLException {
         Connection con = getCon();
-        String sql = "INSERT INTO PointsTable(tournament_id ,team_id) VALUES ((SELECT tournament_id from Tournaments where (tournament_name=? and year=?) ),?)";
+        String sql = "INSERT INTO PointsTable(tournament_id ,team_id, group_name) VALUES ((SELECT tournament_id from Tournaments where (tournament_name=? and year=?) ),?,?)";
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setString(1, tournament_name);
         ps.setInt(2, tourYear );
         ps.setInt(3, team_id);
+        ps.setString(4, groupName);
         ps.executeUpdate();
     }
-    public static void insertTeamMatchStats(int match_id, int  team_id, int tourYear, String tournament_name,String email) throws SQLException {
+    public static void insertTeamMatchStats(int match_id, int  team_id,int tournament_id) throws SQLException {
         Connection con = getCon();
         String sql = "INSERT INTO TeamMatchStats(tournament_id, match_id, team_id) " +
-                "VALUES ((SELECT tournament_id FROM Tournaments WHERE tournament_name = ? AND year = ? AND host_id=(SELECT user_id from Users where email=?)), ?, ? ) ";
+                "VALUES (?, ?, ? ) ";
 
         PreparedStatement ps = con.prepareStatement(sql);
-        ps.setString(1, tournament_name);
-        ps.setInt(2, tourYear);
-        ps.setString(3, email);
-        ps.setInt(4, match_id);
-        ps.setInt(5, team_id);
+        ps.setInt(1,tournament_id);
+        ps.setInt(2,match_id);
+        ps.setInt(3,team_id);
         ps.executeUpdate();
     }
 
@@ -212,6 +207,40 @@ public class SQLquery {
         ps.executeUpdate();
     }
 
+    public static void updateTeamMatchResult(int match_id, int teamId, String result) throws SQLException {
+        Connection con = getCon();
+        String sql = "UPDATE TeamMatchStats SET result = ? WHERE match_id = ? and team_id=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, result);
+        ps.setInt(2, match_id);
+        ps.setInt(3, teamId);
+        ps.executeUpdate();
+    }
+
+    public static void updateGroupName(int tournamentId,int teamId) throws SQLException {
+        Connection con = getCon();
+        String sql = "UPDATE PointsTable SET group_name='Group2' WHERE team_id=? and tournament_id=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1,teamId);
+        ps.setInt(2,tournamentId);
+        ps.executeUpdate();
+    }
+
+    public static void updatePointsTable(int points,int matches_won,int matches_lost,int matches_drawn,double nrr,int teamId, int tournamentId) throws SQLException {
+        Connection con = getCon();
+        String sql = "UPDATE PointsTable SET points =(points+?), matches_won=(matches_won+?), matches_lost=(matches_lost+?)" +
+                ", matches_drawn=(matches_drawn+?), net_run_rate=(net_run_rate+?)  WHERE team_id=? and tournament_id=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, points);
+        ps.setInt(2, matches_won);
+        ps.setInt(3, matches_lost);
+        ps.setInt(4, matches_drawn);
+        ps.setDouble(5, nrr);
+        ps.setInt(6, teamId);
+        ps.setInt(7, tournamentId);
+        ps.executeUpdate();
+    }
+
     public static void updateBallByBallNoBall(int match_id,int inning,int over,int ball,int scoredRun,int extras) throws SQLException {
         Connection con = getCon();
         String sql = "UPDATE ball_by_ball SET  runs_batsman = ?, extras_runs=? WHERE match_id = ? and over_number=? and ball_number=? and innings=?";
@@ -281,7 +310,7 @@ public class SQLquery {
         Connection con = getCon();
         ArrayList<Match> Schedule = new ArrayList<>();
 
-        String sql = "SELECT M.match_id, M.team1_id, M.team2_id, M.inning_overs, M.match_status " +
+        String sql = "SELECT M.match_id, M.team1_id, M.team2_id, M.inning_overs, M.match_status, M.match_type " +
                 " FROM Matches M WHERE  M.Host_Id = (SELECT user_id FROM Users WHERE email = ? AND match_status <> 'COMPLETED')" +
                 " ORDER BY M.Match_Number";
 
@@ -294,6 +323,7 @@ public class SQLquery {
             Match match= new Match(getTeamById(Teams,rs.getInt(2)), getTeamById(Teams,rs.getInt(3)), rs.getInt(1));
             match.setInningOvers(rs.getInt(4));
             match.setMatchStatus(rs.getString(5));
+            match.setMatchType(rs.getString(6));
             Schedule.add(match);
         }
 
@@ -332,142 +362,20 @@ public class SQLquery {
         return allPlayers;
     }
 
-    public static void displayScorecardFromDB(int matchId) throws SQLException {
+    public static int getTournamentId(String email) throws SQLException {
         Connection con = getCon();
+        String sql = "SELECT tournament_id FROM Tournaments WHERE host_id=(select user_id from Users where email=?)";
 
-        int inning = getCurrentInningFromDB(con, matchId);
-        int strikerId = getCurrentStrikerId(con, matchId, inning);
-        int bowlerId = getCurrentBowlerId(con, matchId, inning);
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, email);
+        ResultSet rs = ps.executeQuery();
 
+        rs.next();
+        return rs.getInt("tournament_id");
 
-        String teamSql = " SELECT t.team_name, tm.runs_scored, tm.wickets_lost, tm.overs_played "+
-        "FROM TeamMatchStats tm "+
-        "JOIN Teams t ON tm.team_id = t.team_id "+
-        "WHERE tm.match_id = ? "+
-        "ORDER BY tm.team_id "+
-        "LIMIT 1 OFFSET ?";
-        PreparedStatement teamPs = con.prepareStatement(teamSql);
-        teamPs.setInt(1, matchId);
-        teamPs.setInt(2, inning - 1);
-        ResultSet teamRs = teamPs.executeQuery();
-
-        if (!teamRs.next()) {
-            System.out.println("No data found for match " + matchId + " inning " + inning);
-            return;
-        }
-
-        String teamName = teamRs.getString("team_name");
-        int totalRun = teamRs.getInt("runs_scored");
-        int wickets = teamRs.getInt("wickets_lost");
-        double oversPlayed = teamRs.getDouble("overs_played");
-
-        int i = (int) oversPlayed;
-        int j = (int) Math.round((oversPlayed - i) * 10);
-
-        System.out.println("-----------------");
-        System.out.println(teamName);
-        System.out.print("(" + totalRun + "/" + wickets + ")          OVER: (" + i + "." + j + ")");
-        if (inning == 2) {
-            System.out.println("     Target " + getTargetFromDB(con, matchId));
-        } else {
-            System.out.println();
-        }
-
-        double crr = (i == 0 && j == 0) ? 0.0 : (totalRun * 6.0) / (i * 6 + j);
-        System.out.println("CRR: " + String.format("%.2f", crr));
-
-
-        System.out.println();
-        System.out.println("Batter             R     B     4s     6s");
-        String batsmanSql = " SELECT p.player_id, p.player_name, s.runs_scored, s.balls_faced, s.fours, s.sixes "+
-        "FROM PlayerMatchStats s "+
-        "JOIN Players p ON s.player_id = p.player_id "+
-        "JOIN Teams t ON p.team_id = t.team_id "+
-        "WHERE s.match_id = ? AND t.team_name = ? "+
-        "AND s.BattingStats != 'DNB' "+
-        "ORDER BY s.BattingStats = 'PLAYING' DESC LIMIT 2";
-
-        PreparedStatement batPs = con.prepareStatement(batsmanSql);
-        batPs.setInt(1, matchId);
-        batPs.setString(2, teamName);
-        ResultSet batRs = batPs.executeQuery();
-
-        while (batRs.next()) {
-            String name = batRs.getString("player_name");
-            if (batRs.getInt("player_id") == strikerId) name += "*";
-            System.out.println(
-                    name + " ".repeat(Math.max(0, 19 - name.length())) +
-                            batRs.getInt("runs_scored") + " ".repeat(6 - String.valueOf(batRs.getInt("runs_scored")).length()) +
-                            batRs.getInt("balls_faced") + " ".repeat(6 - String.valueOf(batRs.getInt("balls_faced")).length()) +
-                            batRs.getInt("fours") + " ".repeat(7 - String.valueOf(batRs.getInt("fours")).length()) +
-                            batRs.getInt("sixes")
-            );
-        }
-
-
-        System.out.println();
-        System.out.println("Bowler             O     R     W");
-        String bowlerSql = " SELECT p.player_name, s.overs_bowled, s.runs_conceded, s.wickets "+
-                            "FROM PlayerMatchStats s "+
-                            "JOIN Players p ON s.player_id = p.player_id "+
-                            "WHERE s.match_id = ? AND s.player_id = ? ";
-        PreparedStatement bowlPs = con.prepareStatement(bowlerSql);
-        bowlPs.setInt(1, matchId);
-        bowlPs.setInt(2, bowlerId);
-        ResultSet bowlRs = bowlPs.executeQuery();
-        if (bowlRs.next()) {
-            System.out.println(
-                            bowlRs.getString("player_name") + " ".repeat(Math.max(0, 18 - bowlRs.getString("player_name").length())) +
-                            bowlRs.getDouble("overs_bowled") + " ".repeat(6 - String.valueOf(bowlRs.getDouble("overs_bowled")).length()) +
-                            bowlRs.getInt("runs_conceded") + " ".repeat(7 - String.valueOf(bowlRs.getInt("runs_conceded")).length()) +
-                            bowlRs.getInt("wickets")
-            );
-        }
-
-        System.out.println("-----------------");
     }
 
-    private static int getCurrentInningFromDB(Connection con, int matchId) throws SQLException {
-        String sql = "SELECT MAX(innings) FROM ball_by_ball WHERE match_id = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, matchId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1) == 0 ? 1 : rs.getInt(1);
-        }
-        return 1;
-    }
 
-    private static int getCurrentStrikerId(Connection con, int matchId, int inning) throws SQLException {
-        String sql = "SELECT striker_id FROM ball_by_ball WHERE match_id = ? AND innings = ? ORDER BY id DESC LIMIT 1";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, matchId);
-            ps.setInt(2, inning);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt("striker_id");
-        }
-        return -1;
-    }
-
-    private static int getCurrentBowlerId(Connection con, int matchId, int inning) throws SQLException {
-        String sql = "SELECT bowler_id FROM ball_by_ball WHERE match_id = ? AND innings = ? ORDER BY id DESC LIMIT 1";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, matchId);
-            ps.setInt(2, inning);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt("bowler_id");
-        }
-        return -1;
-    }
-
-    private static int getTargetFromDB(Connection con, int matchId) throws SQLException {
-        String sql = "SELECT runs_scored FROM TeamMatchStats WHERE match_id = ? ORDER BY team_id LIMIT 1";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, matchId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt("runs_scored") + 1;
-        }
-        return 0;
-    }
 
 
 
