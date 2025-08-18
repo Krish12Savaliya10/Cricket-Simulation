@@ -86,7 +86,7 @@ public class MatchSimulation {
                 if (choice < min || choice > max) {
                     throw new InvalidChoiceException("Please enter between " + min + " and " + max);
                 }
-                sc.nextLine(); // Clear buffer
+                sc.nextLine();
                 return choice;
             } catch (InputMismatchException e) {
                 System.out.println("Please enter a valid number");
@@ -304,8 +304,6 @@ public class MatchSimulation {
             Batsman2 = newBatsman;
             Batsman2.setOnStrike(false);
         }
-
-        // Clear free hit status after any wicket (even runout during free hit)
         battingTeam.freeHitActive = false;
 
         return false;
@@ -361,8 +359,6 @@ public class MatchSimulation {
             Batsman1.setOnStrike(true);
             Batsman2.setOnStrike(false);
         }
-
-        // Set strike based on runout end
 
         return runs;
     }
@@ -510,13 +506,14 @@ public class MatchSimulation {
                         j--;
                         break;
                 }
-                if(j!=5)
-                    j++;
-                else {
-                    i++;
-                    j=0;
+                if(j==0) {
+                    i--;
+                    j = 5;
                 }
-                double overPlayed = Double.parseDouble(i + "." + ((j == -1) ? 0 : j));
+                else {
+                    j--;
+                }
+                double overPlayed = Double.parseDouble(i + "." + j);
                 BattingTeam.setOverPlayed(overPlayed);
                 updateBattingStats(matchId,Batsman1.getPlayerId(),Batsman1.getRunsScored(),Batsman1.getBallsFaced(), Batsman1.getFours(), Batsman1.getSixes());
                 updateBattingStats(matchId,Batsman2.getPlayerId(),Batsman2.getRunsScored(),Batsman2.getBallsFaced(), Batsman2.getFours(), Batsman2.getSixes());
@@ -537,6 +534,12 @@ public class MatchSimulation {
 
 
                 if (inning == 2 && BattingTeam.totalRun >= target) {
+                    if(j!=5)
+                        j++;
+                    else {
+                        i++;
+                        j=0;
+                    }
                     BattingTeam.won = true;
                     break outerLoop;
                 }
@@ -618,7 +621,7 @@ public class MatchSimulation {
     private static String getValidRunInput(Scanner sc) {
         while (true) {
             System.out.println("Enter run");
-            System.out.print("0 1 2 3 4 6 \nN/n for <Noball> W/w for <wide> O/o for <Out> E/e for <Extras>\nU/u for <Undo>\nEnter: ");
+            System.out.print("0 1 2 3 4 6 \nN/n for <Noball> W/w for <wide> O/o for <Out> E/e for <Extras>\nU/u for <Undo>");
             String input = sc.nextLine().toUpperCase();
 
             if (input.matches("[012346NWOEU]")) {
@@ -656,8 +659,6 @@ public class MatchSimulation {
         return runs;
     }
 
-
-
     private static void displayMatchResult(Team BattingTeam, int numberOfPlayer,Match match, int TournamentId) throws SQLException {
         boolean isTournament=match.matchType.equalsIgnoreCase("TOURNAMENT");
         Team WIN = null;
@@ -675,7 +676,6 @@ public class MatchSimulation {
             }
         }else if(team1.won==team2.won){
             System.out.println("Match DRAW");
-            updateWinner(match.MatchId,0);
             team1.setPoints(team1.getPoints()+1);
             team2.setPoints(team2.getPoints()+1);
             if (isTournament){
@@ -684,14 +684,14 @@ public class MatchSimulation {
             }
         }
         else {
-                WIN = (BattingTeam == team1)?team2:team1;
-                LOSS = (BattingTeam == team1)?team1:team2;
-                System.out.println(WIN.teamName + " won by " + (WIN.totalRun - LOSS.totalRun) + " runs.");
-                if (isTournament){
-                    nrr=calculateMatchNRR(WIN,LOSS);
-                    updatePointsTable(2,1,0,0,nrr,WIN.teamId,TournamentId);
-                    updatePointsTable(0,0,1,0,(-1*nrr),LOSS.teamId,TournamentId);
-                }
+            WIN = (BattingTeam == team1)?team2:team1;
+            LOSS = (BattingTeam == team1)?team1:team2;
+            System.out.println(WIN.teamName + " won by " + (WIN.totalRun - LOSS.totalRun) + " runs.");
+            if (isTournament){
+                nrr=calculateMatchNRR(WIN,LOSS);
+                updatePointsTable(2,1,0,0,nrr,WIN.teamId,TournamentId);
+                updatePointsTable(0,0,1,0,(-1*nrr),LOSS.teamId,TournamentId);
+            }
 
         }
         if(WIN!=null && LOSS!=null) {
@@ -706,7 +706,6 @@ public class MatchSimulation {
         updateMatchStatus(match.MatchId, "COMPLETED");
         match.setMatchStatus("COMPLETED");
     }
-
     public static int convertToBalls(double overs) {
         int overPart = (int) overs; // 19
         int ballPart = (int) Math.round((overs - overPart) * 10); // 5

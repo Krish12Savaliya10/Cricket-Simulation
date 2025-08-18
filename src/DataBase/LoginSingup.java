@@ -11,7 +11,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Scanner;
 
 //import static DataBase.AudienceInterface.showAudienceMenu;
-import static DataBase.AudienceInterface.showAudienceMenu;
+//import static DataBase.AudienceInterface.showAudienceMenu;
 import static DataBase.SQLquery.*;
 import static Simulation.Tournament.*;
 

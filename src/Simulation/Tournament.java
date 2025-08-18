@@ -212,6 +212,7 @@ public class Tournament {
             Match match = Schedule.removeFirst();
                 Team team1 = match.team1;
                 Team team2 = match.team2;
+                System.out.println("Press [Enter}");
                     insertTeamMatchStats(match.MatchId, team1.teamId, tournamentId);
                     insertTeamMatchStats(match.MatchId, team2.teamId ,tournamentId);
                 match.setMatchStatus("LIVE");
@@ -415,7 +416,7 @@ public class Tournament {
             }
         } while ((batsmenCount + allRoundersCount + bowlersCount) != NumberOfPlayer);
 
-        sc.nextLine(); // Clear buffer
+        sc.nextLine();
 
         System.out.println("\nEnter batsmen names:");
         for (int i = 1; i <= batsmenCount; i++) {
