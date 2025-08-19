@@ -319,7 +319,7 @@ public class SQLquery {
         }
     }
 
-    public static ArrayList<Team> getTeamData(String email) throws SQLException {
+    public static ArrayList<Team> getTeamData(String email) {
         ArrayList<Team> teams = new ArrayList<>();
 
         String sql = "SELECT DISTINCT t.team_id, t.team_name " +
@@ -338,9 +338,13 @@ public class SQLquery {
             }
             return teams;
         }
+        catch (SQLException e){
+            System.out.println("No data found for teams");
+            return teams;
+        }
     }
 
-    public static ArrayList<Match> getSchedule(String email,ArrayList<Team> Teams) throws SQLException {
+    public static ArrayList<Match> getSchedule(String email,ArrayList<Team> Teams) {
 
         ArrayList<Match> Schedule = new ArrayList<>();
 
@@ -360,9 +364,10 @@ public class SQLquery {
                 match.setMatchType(rs.getString(6));
                 Schedule.add(match);
             }
-
-            
-            
+            return Schedule;
+        }
+        catch (SQLException e){
+            System.out.println("No data found for schedule");
             return Schedule;
         }
     }
@@ -392,11 +397,61 @@ public class SQLquery {
                 else
                     allPlayers.addBowler(name, id);
             }
-            
-            
             return allPlayers;
         }
     }
+
+    public static ArrayList<Team> getTopTeams(int tournamentId, boolean groupMode) throws SQLException {
+        ArrayList<Team> topTeams = new ArrayList<>();
+        String sql;
+
+        try (Connection con = getCon()) {
+            if (groupMode) {
+                sql = "SELECT team_id, team_name " +
+                        "FROM PointsTable pt " +
+                        "JOIN Teams t ON pt.team_id = t.team_id " +
+                        "WHERE pt.tournament_id = ? AND pt.group_name = ? " +
+                        "ORDER BY pt.points DESC, pt.net_run_rate DESC LIMIT 2";
+
+
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, tournamentId);
+                    ps.setString(2, "A");  // Group A
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) {
+                        topTeams.add(new Team(rs.getString("team_name"), rs.getInt("team_id")));
+                    }
+                }
+
+                // Group B
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, tournamentId);
+                    ps.setString(2, "B");  // Group B
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) {
+                        topTeams.add(new Team(rs.getString("team_name"), rs.getInt("team_id")));
+                    }
+                }
+
+            } else {
+                sql = "SELECT team_id, team_name " +
+                        "FROM PointsTable pt " +
+                        "JOIN Teams t ON pt.team_id = t.team_id " +
+                        "WHERE pt.tournament_id = ? " +
+                        "ORDER BY pt.points DESC, pt.net_run_rate DESC LIMIT 4";
+
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, tournamentId);
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) {
+                        topTeams.add(new Team(rs.getString("team_name"), rs.getInt("team_id")));
+                    }
+                }
+            }
+        }
+        return topTeams;
+    }
+
 
     public static int getTournamentId(String email) throws SQLException {
         String sql = "SELECT tournament_id FROM Tournaments WHERE host_id=(select user_id from Users where email=?)";
@@ -411,99 +466,4 @@ public class SQLquery {
         }
 
     }
-    
-    public static void main(String[] args) throws SQLException {
-
-        Connection con=SQLquery.getCon();
-            if(con!=null) {
-                System.out.println("Connection successful!");
-
-                /*     User
-                       CREATE TABLE Users (user_id INT PRIMARY KEY AUTO_INCREMENT,
-                       username VARCHAR(25) UNIQUE NOT NULL,password VARCHAR(20)
-                       NOT NULL,role ENUM('HOST', 'AUDIENCE') NOT NULL,
-                       full_name VARCHAR(100)
-
-                       Teams
-                       CREATE TABLE Teams (team_id INT PRIMARY KEY AUTO_INCREMENT,
-                       team_name VARCHAR(50) UNIQUE NOT NULL)
-
-
-                       Players
-                       CREATE TABLE Players (player_id INT PRIMARY KEY AUTO_INCREMENT,
-                       player_name VARCHAR(50) NOT NULL,team_id INT NOT NULL,
-                       role ENUM('BATSMAN', 'BOWLER', 'ALLROUNDER') NOT NULL,
-                       FOREIGN KEY (team_id) REFERENCES Teams(team_id))
-
-                       Schedule
-                       CREATE TABLE Matches (
-                       match_id INT PRIMARY KEY AUTO_INCREMENT,
-                       team1_id INT NOT NULL, team2_id INT NOT NULL, winner_team_id INT,
-                       match_status ENUM('UPCOMING', 'COMPLETED','LIVE') DEFAULT 'UPCOMING',
-                       FOREIGN KEY (team1_id) REFERENCES Teams(team_id),
-                       FOREIGN KEY (team2_id) REFERENCES Teams(team_id),
-                       FOREIGN KEY (winner_team_id) REFERENCES Teams(team_id))
-
-                       Tournament
-                       CREATE TABLE Tournaments(
-                       tournament_id INT PRIMARY KEY AUTO_INCREMENT,
-                       tournament_name VARCHAR(50),
-                       year YEAR,host VARCHAR(50))
-
-                       Match by Match data of player
-                       CREATE TABLE PlayerMatchStats (
-                       stat_id INT PRIMARY KEY AUTO_INCREMENT,
-                       match_id INT,player_id INT,
-                       runs_scored INT DEFAULT 0,
-                       balls_faced INT DEFAULT 0,
-                       fours INT DEFAULT 0,
-                       sixes INT DEFAULT 0,
-                       wickets INT DEFAULT 0,
-                       overs_bowled DECIMAL(4,1) DEFAULT 0.0,
-                       runs_conceded INT DEFAULT 0,
-                       FOREIGN KEY (match_id) REFERENCES Matches(match_id),
-                       FOREIGN KEY (player_id) REFERENCES Players(player_id))
-
-                       Match by Match data of Match
-                       CREATE TABLE TeamMatchStats(
-                       team_stat_id INT PRIMARY KEY AUTO_INCREMENT,
-                       match_id INT,team_id INT,
-                       runs_scored INT,wickets_lost INT
-                       overs_played DECIMAL(3,1),
-                       result ENUM('WIN', 'LOSS', 'DRAW'),
-                       FOREIGN KEY (match_id) REFERENCES Matches(match_id),
-                       FOREIGN KEY (team_id) REFERENCES Teams(team_id))
-
-
-                       points table
-                       CREATE TABLE PointsTable (
-                       id INT PRIMARY KEY AUTO_INCREMENT,
-                       tournament_id INT,team_id INT,
-                       matches_played INT DEFAULT 0,
-                       matches_won INT DEFAULT 0,
-                       matches_lost INT DEFAULT 0,
-                       matches_drawn INT DEFAULT 0,
-                       points INT DEFAULT 0,
-                       net_run_rate DECIMAL(3,2) DEFAULT 0.00,
-                       FOREIGN KEY (tournament_id) REFERENCES Tournaments(tournament_id),
-                       FOREIGN KEY (team_id) REFERENCES Teams(team_id))
-
-
-                       Ball by ball
-                       CREATE TABLE ball_by_ball (
-                       id INT AUTO_INCREMENT PRIMARY KEY, match_id INT NOT NULL,
-                       innings INT NOT NULL,over_number INT NOT NULL,
-                       ball_number INT NOT NULL, striker_id INT NOT NULL,
-                       non_striker_id INT NOT NULL,bowler_id INT NOT NULL,
-                       runs_batsman INT DEFAULT 0,extras_runs INT DEFAULT 0,
-                       is_wicket BOOLEAN DEFAULT FALSE,out_player_id INT,
-                       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)
-
-
-                 */
-
-
-    }
-
-}
 }

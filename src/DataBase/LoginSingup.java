@@ -8,10 +8,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-//import static DataBase.AudienceInterface.showAudienceMenu;
-//import static DataBase.AudienceInterface.showAudienceMenu;
 import static DataBase.SQLquery.*;
 import static Simulation.Tournament.*;
 
@@ -55,10 +54,10 @@ public class LoginSingup {
                 String role = "";
 
                 System.out.print("Enter Email ID: ");
-                String email = getValidEmail(sc);
+                String email = sc.nextLine();
 
                 System.out.print("Enter Password: ");
-                String password = getValidPassword(sc);
+                String password = sc.nextLine();
 
                 Connection con = getCon();
                 String sql = "SELECT * FROM Users WHERE email = ? AND password = ?";
@@ -80,21 +79,27 @@ public class LoginSingup {
                     while (true) {
                         int choiceForMatch = getValidInt(sc,
                                 "\nEnter 1 for new matches\nEnter 2 for saved matches\nEnter 3 for exit\nChoice: ");
+                        System.out.println();
 
                         if (choiceForMatch == 1) {
                             organizeMatch(email);
                             startMatch(sc);
                         } else if (choiceForMatch == 2) {
                             setScheduleFromDB(email);
-                            startMatch(sc);
-                        } else if (choiceForMatch == 3) {
-                            break;
+                            try {
+                                startMatch(sc);
+                            }
+                            catch (NoSuchElementException e){
+                                System.out.println("No data found create new match");
+                            }
                         } else {
-                            System.out.println("Enter valid input.");
+                            break;
                         }
+
                     }
                 } else if (role.equalsIgnoreCase("AUDIENCE")) {
-                    //showAudienceMenu();
+                    AudienceInterface AF=new AudienceInterface();
+                    AF.showAudienceMenu();
                 }
             } else if (choice == 3) {
                 System.out.println("Thank you.");
@@ -105,6 +110,7 @@ public class LoginSingup {
             }
         }
     }
+
 
 
     static int getValidInt(Scanner sc, String prompt) {

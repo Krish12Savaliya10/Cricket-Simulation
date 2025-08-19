@@ -242,14 +242,13 @@ public class LinkedListOfPlayer {
             temp = temp.next;
         }
     }
-    public void displayBowlersAndAllRoundersName(Bowler bowler,int Max) {
+    public void displayBowlersAndAllRoundersName(Bowler bowler) {
         System.out.println("Available bowlers/all-rounders:");
         Player current = head;
         while (current != null) {
-            if (current instanceof Bowler && current!=bowler && current.getOversBowled()<=Max) {
-                System.out.print(current.getPlayerName() +
+            if (current instanceof Bowler && current!=bowler ) {
+                System.out.println(current.getPlayerName() +
                         (current instanceof AllRounder ? " (All-Rounder)" : " (Bowler)"));
-                System.out.println(" over remaing ("+(Max-current.getOversBowled())+")");
             }
             current = current.next;
         }

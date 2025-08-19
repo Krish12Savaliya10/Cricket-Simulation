@@ -26,7 +26,6 @@ public class MatchSimulation {
     private static StackOfBatsman Bat2;
     private static StackOfBowler Ball;
     private static StackOfTeam BatTeam;
-    private static int MaxOverByBowler;
 
     static int getValidCount(Scanner sc, int min) {
         while (true) {
@@ -399,12 +398,6 @@ public class MatchSimulation {
                 Bat1.push(new LinkedListOfPlayer.Player(Batsman1));
                 Bat2.push(new LinkedListOfPlayer.Player(Batsman2));
 
-                if(j!=5)
-                    j++;
-                else {
-                    i++;
-                    j=0;
-                }
                 switch (runInput) {
                     case "0":
                         handleNormalBall(BattingTeam, CurrentBatsman, Bowler, ThisOver, dotBall, "DotBall");
@@ -506,13 +499,7 @@ public class MatchSimulation {
                         j--;
                         break;
                 }
-                if(j==0) {
-                    i--;
-                    j = 5;
-                }
-                else {
-                    j--;
-                }
+
                 double overPlayed = Double.parseDouble(i + "." + j);
                 BattingTeam.setOverPlayed(overPlayed);
                 updateBattingStats(matchId,Batsman1.getPlayerId(),Batsman1.getRunsScored(),Batsman1.getBallsFaced(), Batsman1.getFours(), Batsman1.getSixes());
@@ -591,7 +578,7 @@ public class MatchSimulation {
         }
     }
     private static LinkedListOfPlayer.Bowler getValidBowler(Scanner sc, LinkedListOfPlayer team, LinkedListOfPlayer.Bowler previousBowler) {
-        team.displayBowlersAndAllRoundersName(previousBowler,MaxOverByBowler);
+        team.displayBowlersAndAllRoundersName(previousBowler);
 
         while (true) {
             System.out.print("Enter new bowler name: ");
@@ -600,7 +587,7 @@ public class MatchSimulation {
 
             if (player == null) {
                 System.out.println("Player not found!");
-                team.displayBowlersAndAllRoundersName(previousBowler,MaxOverByBowler);
+                team.displayBowlersAndAllRoundersName(previousBowler);
                 continue;
             }
 
@@ -748,9 +735,6 @@ public class MatchSimulation {
         toss.join();
         Team BattingTeam = whoBat(sc, team1, team2, toss.getWinner());
         boolean isTeam1Batting = BattingTeam == team1;
-
-        MaxOverByBowler=getValidChoice(sc,"Max over by singal Bowler",1,over/2);
-
         System.out.println("\n=== FIRST INNINGS START ===");
         if (isTeam1Batting) {
             team1Players.displayAvailablePlayersName();
@@ -765,6 +749,7 @@ public class MatchSimulation {
         updateBattingStatus(match.MatchId, Batsman2.getPlayerId(),"PLAYING");
         Batsman2.setPlaying(true);
         Batsman2.setOnStrike(false);
+        System.out.println();
 
         playInnings(sc, BattingTeam, isTeam1Batting, over, 1, NumberOfPlayer, 0, match.MatchId);
 
@@ -784,6 +769,7 @@ public class MatchSimulation {
         Batsman2 = getValidPlayer(sc, isTeam1Batting ? team1Players : team2Players, "opener 2");
         Batsman2.setPlaying(true);
         Batsman2.setOnStrike(false);
+        System.out.println();
 
         playInnings(sc, BattingTeam, isTeam1Batting, over, 2, NumberOfPlayer, Target, match.MatchId);
 
