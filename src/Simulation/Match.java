@@ -9,10 +9,11 @@ public class Match {
     String matchType;
 
 
-    public Match(Team team1, Team team2, int MatchId) {
+    public Match(Team team1, Team team2, int MatchId, String matchType) {
         this.team1 = team1;
         this.team2 = team2;
         this.MatchId=MatchId;
+        this.matchType=matchType;
     }
 
     public void setInningOvers(int inningOvers) {

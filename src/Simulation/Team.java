@@ -36,13 +36,13 @@ public class Team {
         this.won = Forstack.won;
         this.freeHitActive = Forstack.freeHitActive;
     }
-    public void setDefault(Team team){
-        team.totalRun = 0;
-        team.overPlayed = 0;
-        team.wicketDown = 0;
-        team.won = false;
-        team.freeHitActive = false;
-        team.Target=0;
+    public void setDefault(){
+        this.totalRun = 0;
+        this.overPlayed = 0;
+        this.wicketDown = 0;
+        this.won = false;
+        this.freeHitActive = false;
+        this.Target=0;
     }
 
     @Override

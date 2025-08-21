@@ -77,7 +77,6 @@ public class Tournament {
                 }
                 System.out.println("Enter number of teams (even number for team, min 6, max 12): ");
                 int num = getValidChoice(sc,"",6,12);
-                boolean isGroup=false;
                 String teamName;
                 Team addTeam;
                 for (int i = 1; i <=num; i++) {
@@ -88,7 +87,7 @@ public class Tournament {
                     while (true) {
                         try {
                             insertTeam(addTeam.teamId, addTeam.teamName, email);
-                            insertIntoPointsTable(TournamentName,year,addTeam.teamId,"Group1");
+                            insertIntoPointsTable(tournamentId, addTeam.teamId);
 
                             break;
                         }catch (SQLException e) {
@@ -111,7 +110,7 @@ public class Tournament {
 
                 }
 
-                int TournamentType=getValidChoice(sc,"Enter 1 for non group tournament "+num*(num-1)/2+" matches \n Enter 2 for group tournament",1,2);
+                int TournamentType=getValidChoice(sc,"Enter 1 for non group tournament "+num*(num-1)/2+" matches \nEnter 2 for group tournament",1,2);
 
                 generateGroups(num);
 
@@ -120,10 +119,7 @@ public class Tournament {
                     sameGroupMatches(Group2,Group1);
                     printSchedule();
                 } else if (TournamentType==2) {
-                    isGroup=true;
-                    for (Team t:Group2){
-                        updateGroupName(t.teamId,tournamentId);
-                    }
+
                     System.out.println("Group 1: " + Group1);
                     System.out.println("Group 2: " + Group2);
                     System.out.println("Choose Schedule Type:");
@@ -168,20 +164,6 @@ public class Tournament {
                     printSchedule();
                 }
 
-                System.out.println("Point table option");
-                if(isGroup){
-                    int PointsTableChoice=getValidChoice(sc,"Enter 1 for group points table \n Enter 2 for single points table",1,2);
-                    if(PointsTableChoice==1){
-                        singlePointsTable(sc);
-                    }
-                    else{
-                        System.out.println("add after pointsTable database");
-                    }
-                }
-                else{
-                    System.out.println("add after pointsTable database");
-                }
-
                 for (Match m:Schedule){
                     m.setMatchType("TOURNAMENT");
                 }
@@ -206,7 +188,6 @@ public class Tournament {
     }
 
     public static void startMatch(Scanner sc) throws SQLException, InterruptedException {
-        int playerCount = 0;
         int matchStart;
         do {
             Match match = Schedule.removeFirst();
@@ -225,39 +206,55 @@ public class Tournament {
                 LinkedListOfPlayer team2Player = TeamSet.get(team2);
                 for (LinkedListOfPlayer.Player player : team1Player.getALlPlayer()) {
                     insertPlayerMatchStats(match.MatchId, player.getPlayerId());
-                    playerCount++;
                 }
                 for (LinkedListOfPlayer.Player player : team2Player.getALlPlayer()) {
                     insertPlayerMatchStats(match.MatchId, player.getPlayerId());
                 }
 
-                team1.setDefault(team1);
+                team1.setDefault();
                 team1Player.setDefault();
-                team2.setDefault(team2);
+                team2.setDefault();
                 team2Player.setDefault();
 
                 System.out.println("--------"+team1.teamName+" vs "+team2.teamName+"---------");
 
-                Simulation(sc, team1, team2, team1Player, team2Player, match.inningOvers, playerCount, match, tournamentId);
+                Simulation(sc, team1, team2, team1Player, team2Player, match.inningOvers, match, tournamentId);
             }
         } while (!Schedule.isEmpty() && matchStart==1) ;
 
     }
 
-    public static void setScheduleFromDB(String email) throws SQLException{
+    public static void setScheduleFromDB(String email){
         Teams.clear();
         Schedule.clear();
+        TeamSet.clear();
         try {
+            tournamentId = getTournamentId(email);
+            if(isTournament(tournamentId) && isTournamentDone(tournamentId)){
+                Teams.addAll(getTopTeams(tournamentId));
+                System.out.println(Teams);
+                for (Team team : Teams) {
+                    TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
+                }
+                if(!arePlayoffsScheduled(tournamentId)){
+                    System.out.println("Play Off");
+                    genratePlayOff(email);
+                    printSchedule();
+                }
+                System.out.println(arePlayoffsScheduled(tournamentId));
+                Schedule.addAll(getSchedule(email, Teams));
+            }
+            else {
             Teams.addAll(getTeamData(email));
             Schedule.addAll(getSchedule(email, Teams));
-            for (Team team : Teams) {
-                TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
+                for (Team team : Teams) {
+                    TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
+                }
             }
-            tournamentId = getTournamentId(email);
             printSchedule();
 
-        }catch (Exception e){
-            System.out.println();
+        } catch (Exception e){
+            System.out.println(e.getMessage());
         }
     }
 
@@ -312,7 +309,7 @@ public class Tournament {
         inputPlayers(sc,TeamSet.get(team2),team2name,numberOfPlayer);
 
         for (int i = 1; i <=matches; i++) {
-            Schedule.add(new Match(team1, team2,(int)((Math.random()*89999)+100000)));
+            Schedule.add(new Match(team1, team2,(int)((Math.random()*89999)+100000),"TOURNAMENT"));
         }
         for (Match m:Schedule){
             if(matches!=1)
@@ -340,12 +337,12 @@ public class Tournament {
         for (int i = 0; i <size; i++) {
             for (int j = i + 1; j <size; j++) {
                 if((int)(Math.random()*2+1)%2==1) {
-                    Team1Schedule.add(new Match(group1.get(i), group1.get(j),(int)((Math.random()*89999)+100000)));
-                    Team2Schedule.add(new Match(group2.get(i), group2.get(j),(int)((Math.random()*89999)+100000)));
+                    Team1Schedule.add(new Match(group1.get(i), group1.get(j),(int)((Math.random()*89999)+100000),"TOURNAMENT"));
+                    Team2Schedule.add(new Match(group2.get(i), group2.get(j),(int)((Math.random()*89999)+100000),"TOURNAMENT"));
                 }
                 else{
-                    Team1Schedule.add(new Match(group1.get(j), group1.get(i),(int)((Math.random()*89999)+100000)));
-                    Team2Schedule.add(new Match(group2.get(j), group2.get(i),(int)((Math.random()*89999)+100000)));
+                    Team1Schedule.add(new Match(group1.get(j), group1.get(i),(int)((Math.random()*89999)+100000),"TOURNAMENT"));
+                    Team2Schedule.add(new Match(group2.get(j), group2.get(i),(int)((Math.random()*89999)+100000),"TOURNAMENT"));
                 }
             }
         }
@@ -368,9 +365,9 @@ public class Tournament {
             }
             for(int j=0;j<group2.size();j++){
                 if((int)(Math.random()*2+1)%2==1)
-                    Schedule.add(new Match(group1.get(j), group2.get(j),(int)((Math.random()*89999)+100000)));
+                    Schedule.add(new Match(group1.get(j), group2.get(j),(int)((Math.random()*89999)+100000),"TOURNAMENT"));
                 else
-                    Schedule.add(new Match(group2.get(j), group1.get(j),(int)((Math.random()*89999)+100000)));
+                    Schedule.add(new Match(group2.get(j), group1.get(j),(int)((Math.random()*89999)+100000),"TOURNAMENT"));
 
             }
         }
@@ -385,25 +382,21 @@ public class Tournament {
         }
     }
 
-    static void singlePointsTable(Scanner sc) {
-        System.out.println("Enter 1 for IPL type playoff");
-        System.out.println("Enter 2 for icc type playoff");
-        int playoffChoice = sc.nextInt();
-        if (playoffChoice == 1) {
-            System.out.println("add semi final 1(1 vs 2)[winner{F1} in final]/[lost{S1} in semi final 2]");
-            System.out.println("add eliminator (3 vs 4)[winner{S1} in semi final 2]");
-            System.out.println("add semi final 2(S1 vs S2)[winner{F2} in final");
-            System.out.println("add final(F1 vs F2)");
-        } else {
-            System.out.println("add semi final 1(1 vs 4)[winner{F1} in final]");
-            System.out.println("add semi final 2(2 vs 3)[winner{F2} in final");
-            System.out.println("add final(F1 vs F2)");
+    static void genratePlayOff(String email) throws SQLException {
+        Team team1=Teams.get(0);
+        Team team2=Teams.get(1);
+        Team team3=Teams.get(2);
+        Team team4=Teams.get(3);
+        Match semi_1=new Match(team1,team4,(int)((Math.random()*89999)+100000),"SEMI1");
+        Match semi_2=new Match(team2,team3,(int)((Math.random()*89999)+100000),"SEMI2");
+        int over=getTournamentOver(tournamentId);
+        Schedule.addAll(Arrays.asList(semi_1,semi_2));
+        int matchNumber=0;
+        for(Match match:Schedule){
+            match.inningOvers=over;
+            matchNumber++;
+            insertSchedule(match.MatchId, match.team1.teamId, match.team2.teamId, email, matchNumber, match.inningOvers, match.matchType,tournamentId);
         }
-    }
-    static void groupPointsTable() {
-        System.out.println("add demi final 1(Group1 1st vs Group2 2nd)[winner{F1} in final");
-        System.out.println("add demi final 2(Group2 1st vs Group1 2nd)[winner{F2} in final");
-        System.out.println("add final(F1 vs F2)");
     }
     static void inputPlayers(Scanner sc, LinkedListOfPlayer teamPlayers, String teamName, int NumberOfPlayer)  {
         int batsmenCount, allRoundersCount, bowlersCount;

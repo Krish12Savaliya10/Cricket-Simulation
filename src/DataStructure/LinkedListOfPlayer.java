@@ -138,7 +138,6 @@ public class LinkedListOfPlayer {
         public Batsman(String name,int playerId) {
             super(name,playerId);
         }
-
     }
 
     // Bowler specialization (can bat too)
@@ -203,12 +202,15 @@ public class LinkedListOfPlayer {
         }
     }
 
-    public void displayPlayerName() {
+    public int displayPlayerName() {
         Player temp = head;
+        int count=0;
         while (temp != null) {
+            count++;
             System.out.println(temp.playerName);
             temp = temp.next;
         }
+        return count;
     }
     public ArrayList<Player> getALlPlayer() {
         ArrayList<Player> players=new ArrayList<>();
@@ -253,6 +255,7 @@ public class LinkedListOfPlayer {
             current = current.next;
         }
     }
+
     public void setDefault(){
         Player current = head;
         while (current != null) {
