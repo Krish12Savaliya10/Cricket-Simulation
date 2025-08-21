@@ -692,6 +692,9 @@ public class MatchSimulation {
         }
         updateMatchStatus(match.MatchId, "COMPLETED");
         match.setMatchStatus("COMPLETED");
+        if(match.matchType.equalsIgnoreCase("FINAL")){
+            updateTournamentComplete(TournamentId);
+        }
     }
     public static int convertToBalls(double overs) {
         int overPart = (int) overs; // 19

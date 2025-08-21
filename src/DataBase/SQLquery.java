@@ -440,7 +440,7 @@ public class SQLquery {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return rs.getInt("match_count") > 0; // true if at least one non-league match exists
+                return rs.getInt("match_count") > 0;
             }
         }
         return false;
@@ -462,4 +462,44 @@ public class SQLquery {
         }
         return 2;
     }
+
+    public static Team getMatchWinner(String matchType, int tournamentId) throws SQLException {
+        String sql = "SELECT team_id, team_name FROM teams WHERE " +
+                    "team_id=(SELECT winner_team_id FROM matches WHERE match_type=? and match_type_id=?) ";
+        try (Connection con = getCon(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, matchType);
+            ps.setInt(2, tournamentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return (new Team(rs.getString("team_name"),rs.getInt("team_id")) ) ;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean isFinalAdded(int tournamentId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Matches WHERE match_type_id = ? AND match_type = 'FINAL'";
+        try (Connection con = getCon();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, tournamentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; // true if FINAL exists
+                }
+            }
+        }
+        return false;
+    }
+
+    public static void updateTournamentComplete(int tournamentId) throws SQLException {
+        String sql = "UPDATE tournaments SET tournament_status='COMPLETED'";
+        try (Connection con = getCon();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.executeUpdate();
+        }
+
+    }
+
 }

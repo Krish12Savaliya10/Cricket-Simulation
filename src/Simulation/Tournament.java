@@ -241,7 +241,9 @@ public class Tournament {
                     genratePlayOff(email);
                     printSchedule();
                 }
-                System.out.println(arePlayoffsScheduled(tournamentId));
+                if(!isFinalAdded(tournamentId)){
+                checkAndGenerateFinal(email);
+                }
                 Schedule.addAll(getSchedule(email, Teams));
             }
             else {
@@ -396,6 +398,30 @@ public class Tournament {
             match.inningOvers=over;
             matchNumber++;
             insertSchedule(match.MatchId, match.team1.teamId, match.team2.teamId, email, matchNumber, match.inningOvers, match.matchType,tournamentId);
+        }
+    }
+    static void checkAndGenerateFinal(String email) throws SQLException {
+        // Fetch semi-final winners
+        Team semi1Winner = getMatchWinner("SEMI1", tournamentId);
+        Team semi2Winner = getMatchWinner("SEMI2", tournamentId);
+
+        // If both winners are available (means both semis are done)
+        if (semi1Winner != null && semi2Winner != null) {
+            System.out.println("Generating FINAL match: " + semi1Winner.getTeamName() + " vs " + semi2Winner.getTeamName());
+
+            TeamSet.put(semi1Winner,getPlayersForTeamsInRoleOrder(semi1Winner));
+            TeamSet.put(semi2Winner,getPlayersForTeamsInRoleOrder(semi2Winner));
+
+            Match finalMatch = new Match(semi1Winner, semi2Winner, (int) ((Math.random() * 89999) + 100000), "FINAL");
+
+
+            finalMatch.inningOvers =  getTournamentOver(tournamentId);
+
+            insertSchedule(finalMatch.MatchId, finalMatch.team1.teamId, finalMatch.team2.teamId,
+                    email, 0, finalMatch.inningOvers, finalMatch.matchType, tournamentId);
+
+            finalMatch.setMatchStatus("UPCOMING");
+            Schedule.add(finalMatch);
         }
     }
     static void inputPlayers(Scanner sc, LinkedListOfPlayer teamPlayers, String teamName, int NumberOfPlayer)  {
