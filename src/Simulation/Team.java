@@ -11,10 +11,7 @@ public class Team {
     int wicketDown;
     int Target;
     String teamName;
-    int win;
-    int lose;
     int points;
-    int matchPlayed;
     int teamId;
     boolean won;
     boolean freeHitActive;
@@ -56,22 +53,6 @@ public class Team {
         return teamName;
     }
 
-    public int getLose() {
-        return lose;
-    }
-
-    public void setLose(int lose) {
-        this.lose = lose;
-    }
-
-    public int getWin() {
-        return win;
-    }
-
-    public void setWin(int win) {
-        this.win = win;
-    }
-
     public int getPoints() {
         return points;
     }
@@ -81,12 +62,6 @@ public class Team {
     }
 
     public int getTeamId() {return teamId;}
-
-    public void setTeamId(int teamId) {this.teamId = teamId;}
-
-    public double getOverPlayed() {
-        return overPlayed;
-    }
 
     public void setOverPlayed(double overPlayed) {
         this.overPlayed = overPlayed;

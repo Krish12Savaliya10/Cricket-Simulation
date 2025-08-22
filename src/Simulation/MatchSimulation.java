@@ -103,6 +103,7 @@ public class MatchSimulation {
                 if (run < 0 || run > 6 || run == 5) {
                     throw new InvalidRunException("Enter valid run [(0-4) or 6)]:");
                 }
+                sc.nextLine();
                 return run;
             } catch (InvalidRunException e) {
                 System.out.println(e.getMessage());
@@ -693,7 +694,11 @@ public class MatchSimulation {
         updateMatchStatus(match.MatchId, "COMPLETED");
         match.setMatchStatus("COMPLETED");
         if(match.matchType.equalsIgnoreCase("FINAL")){
-            updateTournamentComplete(TournamentId);
+            updateTournamentComplete(TournamentId, WIN != null ? WIN.teamId : 0);
+        }
+
+        if(match.matchType.equalsIgnoreCase("SERIES")){
+            updateCompletedMatches(TournamentId);
         }
     }
     public static int convertToBalls(double overs) {

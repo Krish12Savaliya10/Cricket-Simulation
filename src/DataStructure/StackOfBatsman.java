@@ -40,15 +40,6 @@ public class StackOfBatsman {
         return popped;
     }
 
-
-    public LinkedListOfPlayer.Player peek() {
-        if (isEmpty()) {
-            return null;
-        }
-        return top.data;
-    }
-
-
     public boolean isEmpty() {
         return top == null;
     }

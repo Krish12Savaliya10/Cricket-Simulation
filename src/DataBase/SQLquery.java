@@ -86,6 +86,23 @@ public class SQLquery {
             ps.executeUpdate();
         }
     }
+
+    public static void insertSeries(int seriesId,String series_name,int team1Id,int team2Id,int total_matches,String email) throws SQLException {
+        String sql = "INSERT INTO series(series_id, series_name, host_id, team1_id, team2_id,total_matches) VALUES " +
+                "(?,?,(select user_id from Users where email=?),?,?,?)";
+
+        try(Connection con = getCon();
+            PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, seriesId);
+            ps.setString(2, series_name);
+            ps.setString(3, email);
+            ps.setInt(4, team1Id);
+            ps.setInt(5, team2Id);
+            ps.setInt(6, total_matches);
+            ps.executeUpdate();
+        }
+    }
+
     public static void insertTeamMatchStats(int match_id, int  team_id,int tournament_id) throws SQLException {
         String sql = "INSERT INTO TeamMatchStats(tournament_id, match_id, team_id) " +
                 "VALUES (?, ?, ? ) ";
@@ -325,19 +342,24 @@ public class SQLquery {
     }
 
     //cursor
-    public static ArrayList<Match> getSchedule(String email, ArrayList<Team> Teams) throws SQLException {
+    public static ArrayList<Match> getSchedule(String email, ArrayList<Team> Teams, String matchType) throws SQLException {
         ArrayList<Match> schedule = new ArrayList<>();
 
-        String sql = "CALL getScheduleByEmail(?)";
+        String sql = "CALL getScheduleByEmail(?,?)";
 
         try (Connection con = getCon();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, email);
+            ps.setString(2, matchType);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                Match match = new Match(getTeamById(Teams, rs.getInt("team1_id")), getTeamById(Teams, rs.getInt("team2_id")), rs.getInt("match_id"),rs.getString("match_type"));
+                Match match = new Match(
+                        getTeamById(Teams, rs.getInt("team1_id")),
+                        getTeamById(Teams, rs.getInt("team2_id")),
+                        rs.getInt("match_id"),matchType);
+
                 match.setInningOvers(rs.getInt("inning_overs"));
                 match.setMatchStatus(rs.getString("match_status"));
                 schedule.add(match);
@@ -345,6 +367,7 @@ public class SQLquery {
         }
         return schedule;
     }
+
 
 
     //cursor
@@ -417,15 +440,34 @@ public class SQLquery {
 
 
     public static int getTournamentId(String email) throws SQLException {
-        String sql = "SELECT tournament_id FROM Tournaments WHERE host_id=(select user_id from Users where email=?)";
+        String sql = "SELECT tournament_id FROM Tournaments WHERE host_id=(select user_id from Users where email=?)" +
+                    " and tournament_status <> 'COMPLETED'";
 
         try(Connection con = getCon();
             PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
 
-            rs.next();
-            return rs.getInt("tournament_id");
+            if (rs.next()) {
+                return rs.getInt("tournament_id");
+            } else {
+                return -1;
+            }
+        }
+    }
+    public static int getSeriesId(String email) throws SQLException {
+        String sql = "SELECT series_id FROM series WHERE host_id=(select user_id from Users where email=?) and statuse <> 'COMPLETED'";
+
+        try(Connection con = getCon();
+            PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("series_id");
+            } else {
+                return -1;
+            }
         }
     }
 
@@ -493,13 +535,45 @@ public class SQLquery {
         return false;
     }
 
-    public static void updateTournamentComplete(int tournamentId) throws SQLException {
-        String sql = "UPDATE tournaments SET tournament_status='COMPLETED'";
+    public static void updateTournamentComplete(int tournamentId,int winnerId) throws SQLException {
+        String sql = "UPDATE tournaments SET tournament_status='COMPLETED',winner_team_id=? where tournament_id=?";
         try (Connection con = getCon();
              PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1,winnerId);
+            ps.setInt(2,tournamentId);
             ps.executeUpdate();
         }
 
+    }
+
+    public static boolean isSeriesCompleted(int tournamentId) throws SQLException {
+        String sql = "SELECT COUNT(*) AS remaining " +
+                "FROM Matches " +
+                "WHERE match_type_id = ? AND match_status <> 'COMPLETED'";
+
+        try (Connection con = getCon();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, tournamentId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int remaining = rs.getInt("remaining");
+                return remaining == 0;
+            }
+        }
+        return false;
+    }
+
+    public static void updateCompletedMatches(int seriesId) throws SQLException {
+        String sql = "UPDATE series SET completed_matche = completed_matche + 1 WHERE series_id = ?";
+
+        try (Connection con = getCon();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, seriesId);
+            ps.executeUpdate();
+        }
     }
 
 }

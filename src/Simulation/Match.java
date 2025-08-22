@@ -20,17 +20,10 @@ public class Match {
         this.inningOvers = inningOvers;
     }
 
-    public String getMatchStatus() {
-        return matchStatus;
-    }
-
     public void setMatchStatus(String matchStatus) {
         this.matchStatus = matchStatus;
     }
 
-    public String getMatchType() {
-        return matchType;
-    }
 
     public void setMatchType(String matchType) {
         this.matchType = matchType;
@@ -40,6 +33,5 @@ public class Match {
     public String toString() {
         return team1 + " vs " + team2;
     }
-
-
+    
 }

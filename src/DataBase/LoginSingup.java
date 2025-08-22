@@ -85,7 +85,7 @@ public class LoginSingup {
                             organizeMatch(email);
                             startMatch(sc);
                         } else if (choiceForMatch == 2) {
-                            setScheduleFromDB(email);
+                            setScheduleFromDB(email,sc);
                             try {
                                 startMatch(sc);
                             }

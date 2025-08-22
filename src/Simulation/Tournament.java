@@ -47,17 +47,19 @@ public class Tournament {
                 TournamentName=sc.nextLine();
                 year=LocalDate.now().getYear();
                 tournamentId=(int)((Math.random()*89999)+100000);
+                System.out.print("Enter number of matches (2 to 5):");
+                int n = getValidChoice(sc,"",2,5);
+                TwoTeamsMatches(sc, n,playerCount,email);
+
                 while(true) {
-                    try {insertTournament(tournamentId,TournamentName,year,email);
+                    try {insertSeries(tournamentId,TournamentName, Schedule.getFirst().team1.teamId, Schedule.getFirst().team2.teamId,n,email);
                         break;
                     }
                     catch (SQLException e) {
                         tournamentId=(int)((Math.random()*89999)+100000);
+                        System.out.println(e.getMessage());
                     }
                 }
-                System.out.print("Enter number of matches (2 to 5):");
-                int n = getValidChoice(sc,"",2,5);
-                TwoTeamsMatches(sc, n,playerCount,email);
                 printSchedule();
                 break;
 
@@ -224,40 +226,58 @@ public class Tournament {
 
     }
 
-    public static void setScheduleFromDB(String email){
+    public static void setScheduleFromDB(String email,Scanner sc){
         Teams.clear();
         Schedule.clear();
         TeamSet.clear();
         try {
-            tournamentId = getTournamentId(email);
-            if(isTournament(tournamentId) && isTournamentDone(tournamentId)){
-                Teams.addAll(getTopTeams(tournamentId));
-                System.out.println(Teams);
-                for (Team team : Teams) {
-                    TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
+            int choice=getValidChoice(sc,"\nEnter 1 for tournaments\nEnter 2 for series\nenter 3 for single match\n",1,3);
+            if(choice==1) {
+                tournamentId = getTournamentId(email);
+                if(isTournament(tournamentId) && isTournamentDone(tournamentId)){
+                    Teams.addAll(getTopTeams(tournamentId));
+                    System.out.println(Teams);
+                    for (Team team : Teams) {
+                        TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
+                    }
+                    if(!arePlayoffsScheduled(tournamentId)){
+                        System.out.println("Play Off");
+                        genratePlayOff(email);
+                        printSchedule();
+                    }
+                    if(!isFinalAdded(tournamentId)){
+                        checkAndGenerateFinal(email);
+                    }
+                    Schedule.addAll(getSchedule(email, Teams,"platOff"));
                 }
-                if(!arePlayoffsScheduled(tournamentId)){
-                    System.out.println("Play Off");
-                    genratePlayOff(email);
-                    printSchedule();
+                else {
+                    Teams.addAll(getTeamData(email));
+                    Schedule.addAll(getSchedule(email, Teams,"TOURNAMENT"));
+                    for (Team team : Teams) {
+                        TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
+                    }
                 }
-                if(!isFinalAdded(tournamentId)){
-                checkAndGenerateFinal(email);
-                }
-                Schedule.addAll(getSchedule(email, Teams));
-            }
-            else {
-            Teams.addAll(getTeamData(email));
-            Schedule.addAll(getSchedule(email, Teams));
-                for (Team team : Teams) {
-                    TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
-                }
-            }
-            printSchedule();
 
+            }
+           else if(choice==2) {
+                tournamentId = getSeriesId(email);
+                Teams.addAll(getTeamData(email));
+                Schedule.addAll(getSchedule(email, Teams,"SERIES"));
+
+           }
+           else{
+                Teams.addAll(getTeamData(email));
+                System.out.println(Teams);
+                Schedule.addAll(getSchedule(email, Teams,"SINGLE"));
+           }
+            for (Team team : Teams) {
+                TeamSet.put(team, getPlayersForTeamsInRoleOrder(team));
+            }
         } catch (Exception e){
             System.out.println(e.getMessage());
+            System.out.println("no data for live tournaments");
         }
+        printSchedule();
     }
 
     static void TwoTeamsMatches(Scanner sc, int matches,int numberOfPlayer,String email){
@@ -456,6 +476,8 @@ public class Tournament {
                 }
                 catch (SQLException e) {
                     id=(int)((Math.random()*89999)+100000);
+                    System.out.println(e.getMessage());
+
                 }
             }
             teamPlayers.addBatsman(name,id);
@@ -475,6 +497,8 @@ public class Tournament {
                     }
                     catch (SQLException e) {
                         id=(int)((Math.random()*89999)+100000);
+                        System.out.println(e.getMessage());
+
                     }
                 }
                 teamPlayers.addAllrounder(name,id);
@@ -494,6 +518,7 @@ public class Tournament {
                 }
                 catch (SQLException e) {
                     id=(int)((Math.random()*89999)+100000);
+                    System.out.println(e.getMessage());
                 }
             }
             teamPlayers.addBowler(name,id);

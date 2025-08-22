@@ -38,15 +38,6 @@ public class StackOfTeam {
         return popped;
     }
 
-
-    public Team peek() {
-        if (isEmpty()) {
-            return null;
-        }
-        return top.data;
-    }
-
-
     public boolean isEmpty() {
         return top == null;
     }
